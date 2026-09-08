@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Two of Us | Couple Secret Space</title>
-  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing and romantic couple vibes.">
+  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing, romantic kiss animations, and couple vibes.">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-  <!-- Floating Heart Animation Canvas -->
+  <!-- Floating Heart & Kiss Animation Canvas -->
   <canvas id="heartCanvas"></canvas>
 
   <div class="app-viewport">
@@ -62,6 +62,26 @@
       <span class="dot"></span>
       <span class="dot"></span>
       <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 6px;">Partner is typing...</span>
+    </div>
+
+    <!-- Romantic Animation Action Bar -->
+    <div class="animation-actions-bar">
+      <button class="anim-btn kiss-btn" id="kissAnimBtn" title="Send Kiss Animation">
+        <span class="anim-icon">💋</span>
+        <span class="anim-label">Kiss</span>
+      </button>
+      <button class="anim-btn hug-btn" id="hugAnimBtn" title="Send Hug Animation">
+        <span class="anim-icon">🫂</span>
+        <span class="anim-label">Hug</span>
+      </button>
+      <button class="anim-btn rose-btn" id="roseAnimBtn" title="Send Rose Shower">
+        <span class="anim-icon">🌹</span>
+        <span class="anim-label">Roses</span>
+      </button>
+      <button class="anim-btn ring-btn" id="ringAnimBtn" title="Send Ring Sparkle">
+        <span class="anim-icon">💍</span>
+        <span class="anim-label">Love</span>
+      </button>
     </div>
 
     <!-- Quick Reaction Bar -->

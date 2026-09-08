@@ -1,4 +1,4 @@
-// Firebase Realtime Database Integrated Couple Chat Logic
+// Firebase Realtime Database Integrated Couple Chat Logic with Romantic Animations
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { 
   getDatabase, 
@@ -37,6 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const photoUploadTrigger = document.getElementById('photoUploadTrigger');
   const typingIndicator = document.getElementById('typingIndicator');
   
+  // Animation Buttons
+  const kissAnimBtn = document.getElementById('kissAnimBtn');
+  const hugAnimBtn = document.getElementById('hugAnimBtn');
+  const roseAnimBtn = document.getElementById('roseAnimBtn');
+  const ringAnimBtn = document.getElementById('ringAnimBtn');
+
   // Header & Status Elements
   const partnerName = document.getElementById('partnerName');
   const partnerAvatar = document.getElementById('partnerAvatar');
@@ -80,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Audio Synthesizer (Web Audio API)
+  // Audio Synthesizer (Web Audio API for Cute Sound FX & Kiss Smooch)
   const playSound = (type) => {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -103,6 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
         gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         osc.start();
         osc.stop(ctx.currentTime + 0.2);
+      } else if (type === 'kiss') {
+        // Synthesize a cute kiss smooch sound
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
       } else if (type === 'nudge') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(523.25, ctx.currentTime);
@@ -119,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Canvas Heart Particle System
+  // Canvas Particle Animation Engine
   const canvas = document.getElementById('heartCanvas');
   const ctx = canvas.getContext('2d');
   let particles = [];
@@ -131,25 +147,67 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  class HeartParticle {
-    constructor(x, y) {
-      this.x = x || canvas.width / 2;
-      this.y = y || canvas.height / 2;
-      this.size = Math.random() * 18 + 12;
-      this.speedX = (Math.random() - 0.5) * 8;
-      this.speedY = (Math.random() - 0.8) * 8 - 3;
-      this.gravity = 0.15;
-      this.opacity = 1;
-      this.rotation = Math.random() * Math.PI * 2;
-      this.rotSpeed = (Math.random() - 0.5) * 0.1;
-      this.emoji = ['❤️', '💖', '🌹', '✨', '💋', '💍'][Math.floor(Math.random() * 6)];
+  class RomanticParticle {
+    constructor(type = 'heart') {
+      this.type = type;
+      this.x = canvas.width / 2 + (Math.random() - 0.5) * 120;
+      this.y = type === 'rose' ? -30 : canvas.height / 2 + (Math.random() - 0.5) * 60;
+      
+      if (type === 'kiss') {
+        this.size = Math.random() * 32 + 28;
+        this.speedX = (Math.random() - 0.5) * 6;
+        this.speedY = -Math.random() * 5 - 2;
+        this.gravity = 0.08;
+        this.opacity = 1;
+        this.rotation = (Math.random() - 0.5) * 0.4;
+        this.rotSpeed = (Math.random() - 0.5) * 0.05;
+        this.emoji = ['💋', '👩‍❤️‍💋‍👨', '💋', '❤️', '💋'][Math.floor(Math.random() * 5)];
+      } else if (type === 'hug') {
+        this.size = Math.random() * 28 + 20;
+        this.speedX = (Math.random() - 0.5) * 9;
+        this.speedY = (Math.random() - 0.5) * 9;
+        this.gravity = 0.02;
+        this.opacity = 1;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.1;
+        this.emoji = ['🫂', '🤗', '💖', '✨', '💛'][Math.floor(Math.random() * 5)];
+      } else if (type === 'rose') {
+        this.x = Math.random() * canvas.width;
+        this.size = Math.random() * 22 + 16;
+        this.speedX = Math.sin(Math.random() * Math.PI) * 2;
+        this.speedY = Math.random() * 4 + 2;
+        this.gravity = 0.02;
+        this.opacity = 1;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.08;
+        this.emoji = ['🌹', '🥀', '🌸', '💐'][Math.floor(Math.random() * 4)];
+      } else if (type === 'ring') {
+        this.size = Math.random() * 30 + 22;
+        this.speedX = (Math.random() - 0.5) * 7;
+        this.speedY = -Math.random() * 6 - 2;
+        this.gravity = 0.12;
+        this.opacity = 1;
+        this.rotation = (Math.random() - 0.5) * 0.5;
+        this.rotSpeed = (Math.random() - 0.5) * 0.1;
+        this.emoji = ['💍', '💎', '✨', '💖', '👑'][Math.floor(Math.random() * 5)];
+      } else {
+        // Standard Heart
+        this.size = Math.random() * 18 + 12;
+        this.speedX = (Math.random() - 0.5) * 8;
+        this.speedY = (Math.random() - 0.8) * 8 - 3;
+        this.gravity = 0.15;
+        this.opacity = 1;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.1;
+        this.emoji = ['❤️', '💖', '🌹', '✨', '💋'][Math.floor(Math.random() * 5)];
+      }
     }
 
     update() {
       this.x += this.speedX;
       this.y += this.speedY;
       this.speedY += this.gravity;
-      this.opacity -= 0.015;
+      this.opacity -= (this.type === 'rose' ? 0.008 : 0.015);
       this.rotation += this.rotSpeed;
     }
 
@@ -164,9 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const triggerHeartBurst = (count = 35) => {
+  const triggerAnimation = (type, count = 35) => {
     for (let i = 0; i < count; i++) {
-      particles.push(new HeartParticle());
+      particles.push(new RomanticParticle(type));
     }
   };
 
@@ -175,44 +233,40 @@ document.addEventListener('DOMContentLoaded', () => {
     particles.forEach((p, index) => {
       p.update();
       p.draw();
-      if (p.opacity <= 0) particles.splice(index, 1);
+      if (p.opacity <= 0 || p.y > canvas.height + 50) particles.splice(index, 1);
     });
     requestAnimationFrame(animateParticles);
   };
   animateParticles();
 
-  // Firebase Realtime Database Connection & Listeners
-  let messagesRef, myPresenceRef, partnerPresenceRef, nudgeRef;
+  // Firebase Realtime Database Sync
+  let messagesRef, myPresenceRef, partnerPresenceRef, animRef;
 
   const initFirebaseRoom = () => {
     currentRoomCodeLabel.textContent = currentRoomId;
     const partnerRole = rolesData[currentRole].partnerRole;
 
-    // Update Header
     partnerName.innerHTML = `${rolesData[currentRole].partnerName} <span class="couple-title-font">♥</span>`;
     partnerAvatar.src = rolesData[currentRole].avatar;
 
-    // Firebase References
     messagesRef = ref(db, `rooms/${currentRoomId}/messages`);
     myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${currentRole}`);
     partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerRole}`);
-    nudgeRef = ref(db, `rooms/${currentRoomId}/nudge`);
+    animRef = ref(db, `rooms/${currentRoomId}/anim`);
 
-    // Set My Presence & OnDisconnect Handler
     set(myPresenceRef, {
       online: true,
       typing: false,
       lastSeen: serverTimestamp()
     });
 
-    const onDisconnectRef = onDisconnect(myPresenceRef);
-    onDisconnectRef.set({
+    onDisconnect(myPresenceRef).set({
       online: false,
       typing: false,
       lastSeen: serverTimestamp()
     });
 
-    // Listen to Partner's Online Presence & Typing Status
+    // Partner Online & Typing Listener
     onValue(partnerPresenceRef, (snapshot) => {
       const data = snapshot.val();
       if (data && data.online) {
@@ -233,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Listen for Realtime Messages
+    // Realtime Messages Listener
     onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -252,12 +306,16 @@ document.addEventListener('DOMContentLoaded', () => {
       isInitialLoadComplete = true;
     });
 
-    // Listen for Realtime Heart Nudges
-    onValue(nudgeRef, (snapshot) => {
-      const nudgeData = snapshot.val();
-      if (nudgeData && nudgeData.sender !== currentRole && (Date.now() - nudgeData.timestamp < 3000)) {
-        triggerHeartBurst(50);
-        playSound('nudge');
+    // Realtime Animation Listener (Kiss, Hug, Rose, Ring)
+    onValue(animRef, (snapshot) => {
+      const animData = snapshot.val();
+      if (animData && animData.sender !== currentRole && (Date.now() - animData.timestamp < 3000)) {
+        triggerAnimation(animData.animType, 45);
+        if (animData.animType === 'kiss') {
+          playSound('kiss');
+        } else {
+          playSound('nudge');
+        }
       }
     });
   };
@@ -287,8 +345,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="polaroid-caption">${escapeHtml(msg.caption || 'Our Moment ♥')}</div>
         </div>
       `;
-    } else if (msg.type === 'nudge') {
-      contentHtml = `<div class="bubble" style="background: linear-gradient(135deg, #ff4b72, #ff7e5f); color: #fff;">💖 Sent a Heart Burst Nudge!</div>`;
+    } else if (msg.type === 'anim') {
+      const animIcons = { kiss: '💋 Sent a Sweet Kiss!', hug: '🫂 Sent a Warm Hug!', rose: '🌹 Sent a Rose Shower!', ring: '💍 Sent Diamond Love!', nudge: '💖 Sent a Heart Burst!' };
+      contentHtml = `<div class="bubble" style="background: linear-gradient(135deg, #ff4b72, #ff7e5f); color: #fff;">${animIcons[msg.animType] || '💖 Sent Love Animation!'}</div>`;
     }
 
     const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
@@ -313,7 +372,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   };
 
-  // Send Text Message to Firebase
+  // Helper to Send Animation Trigger to Firebase
+  const sendAnimationEvent = (animType) => {
+    triggerAnimation(animType, 45);
+    if (animType === 'kiss') {
+      playSound('kiss');
+    } else {
+      playSound('nudge');
+    }
+
+    set(animRef, {
+      sender: currentRole,
+      animType: animType,
+      timestamp: Date.now()
+    });
+
+    push(messagesRef, {
+      sender: currentRole,
+      animType: animType,
+      timestamp: Date.now(),
+      type: 'anim'
+    });
+  };
+
+  // Event Listeners for Kiss, Hug, Rose, Ring Animation Buttons
+  kissAnimBtn.addEventListener('click', () => sendAnimationEvent('kiss'));
+  hugAnimBtn.addEventListener('click', () => sendAnimationEvent('hug'));
+  roseAnimBtn.addEventListener('click', () => sendAnimationEvent('rose'));
+  ringAnimBtn.addEventListener('click', () => sendAnimationEvent('ring'));
+
+  // Send Message Logic
   const handleSendMessage = () => {
     const text = messageInput.value.trim();
     if (!text) return;
@@ -328,7 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
     playSound('send');
     messageInput.value = '';
 
-    // Reset typing status
     set(myPresenceRef, {
       online: true,
       typing: false,
@@ -341,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') handleSendMessage();
   });
 
-  // Typing Status Broadcast to Firebase
+  // Typing Status Broadcast
   let typingTimeout;
   messageInput.addEventListener('input', () => {
     set(myPresenceRef, {
@@ -360,24 +447,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1500);
   });
 
-  // Heart Nudge Trigger to Firebase
-  nudgeHeartBtn.addEventListener('click', () => {
-    triggerHeartBurst(45);
-    playSound('nudge');
+  // Nudge Heart Button
+  nudgeHeartBtn.addEventListener('click', () => sendAnimationEvent('nudge'));
 
-    set(nudgeRef, {
-      sender: currentRole,
-      timestamp: Date.now()
-    });
-
-    push(messagesRef, {
-      sender: currentRole,
-      timestamp: Date.now(),
-      type: 'nudge'
-    });
-  });
-
-  // Photo Polaroid Upload to Firebase
+  // Photo Polaroid Upload
   photoUploadTrigger.addEventListener('click', () => photoInput.click());
   photoInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -406,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Room & Role Settings Modal
+  // Room Settings Modal
   const openRoomModal = () => {
     roomCodeInput.value = currentRoomId;
     roleSelect.value = currentRole;
@@ -448,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
 
-  // PIN Lock Screen Logic
+  // PIN Lock Logic
   lockAppBtn.addEventListener('click', () => lockModal.classList.add('active'));
 
   keypad.addEventListener('click', (e) => {
@@ -482,6 +555,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Initialize Room & Firebase Connection
+  // Initialize Room & Firebase
   initFirebaseRoom();
 });
