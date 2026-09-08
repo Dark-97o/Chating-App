@@ -139,6 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
   };
 
+  // Helper to safely get Realtime Database references
+  const getSignalRef = () => ref(db, `rooms/${currentRoomId}/callSignal`);
+  const getMessagesRef = () => ref(db, `rooms/${currentRoomId}/messages`);
+  const getAnimRef = () => ref(db, `rooms/${currentRoomId}/anim`);
+
   // Calculate Days Together & Birthday Countdowns
   const updateMilestones = () => {
     const now = new Date();
@@ -360,8 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Firebase Realtime Connection & WebRTC Signaling
-  let messagesRef, myPresenceRef, partnerPresenceRef, animRef, callSignalRef;
-
   const initFirebaseRoom = () => {
     if (!profiles[currentPasscode]) {
       joinModal.classList.add('active');
@@ -382,11 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
     incomingCallerName.textContent = partnerProfile.name;
     typingTextLabel.textContent = `${partnerProfile.name} is typing...`;
 
-    messagesRef = ref(db, `rooms/${currentRoomId}/messages`);
-    myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${myProfile.name}`);
-    partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerProfile.name}`);
-    animRef = ref(db, `rooms/${currentRoomId}/anim`);
-    callSignalRef = ref(db, `rooms/${currentRoomId}/callSignal`);
+    const myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${myProfile.name}`);
+    const partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerProfile.name}`);
 
     set(myPresenceRef, {
       online: true,
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Listen for Realtime Messages
-    onValue(messagesRef, (snapshot) => {
+    onValue(getMessagesRef(), (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const msgList = Object.values(data);
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Listen for Realtime Animations
-    onValue(animRef, (snapshot) => {
+    onValue(getAnimRef(), (snapshot) => {
       const animData = snapshot.val();
       if (animData && animData.senderCode !== currentPasscode && (Date.now() - animData.timestamp < 3000)) {
         triggerAnimation(animData.animType, 16);
@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // WebRTC Realtime Firebase Signaling Listener
-    onValue(callSignalRef, async (snapshot) => {
+    onValue(getSignalRef(), async (snapshot) => {
       const signal = snapshot.val();
       if (!signal || signal.callerCode === currentPasscode) return;
 
@@ -479,6 +479,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // WebRTC Call Core Logic
   const startCall = async (isVideo = true) => {
+    if (!currentPasscode || !profiles[currentPasscode]) {
+      joinModal.classList.add('active');
+      return;
+    }
+
     try {
       localStream = await navigator.mediaDevices.getUserMedia({
         video: isVideo,
@@ -499,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          set(callSignalRef, {
+          set(getSignalRef(), {
             type: 'ICE_CANDIDATE',
             callerCode: currentPasscode,
             candidate: event.candidate.toJSON(),
@@ -511,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
 
-      set(callSignalRef, {
+      set(getSignalRef(), {
         type: 'OFFER',
         callerCode: currentPasscode,
         isVideo: isVideo,
@@ -523,12 +528,16 @@ document.addEventListener('DOMContentLoaded', () => {
       callModal.classList.add('active');
       startCallTimer();
     } catch (err) {
-      alert('Camera & Microphone access is required for calls: ' + err.message);
-    }
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert('Camera or Microphone permission was denied. Please allow camera and mic permissions in your browser bar!');
+      } else {
+        alert('Unable to start call: ' + err.message);
+      }
+    };
   };
 
   const acceptCall = async () => {
-    if (!pendingOffer) return;
+    if (!pendingOffer || !profiles[currentPasscode]) return;
     stopRingtone();
     incomingCallModal.classList.remove('active');
 
@@ -552,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          set(callSignalRef, {
+          set(getSignalRef(), {
             type: 'ICE_CANDIDATE',
             callerCode: currentPasscode,
             candidate: event.candidate.toJSON(),
@@ -565,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
 
-      set(callSignalRef, {
+      set(getSignalRef(), {
         type: 'ANSWER',
         callerCode: currentPasscode,
         answer: { type: answer.type, sdp: answer.sdp },
@@ -584,11 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const declineCall = () => {
     stopRingtone();
     incomingCallModal.classList.remove('active');
-    set(callSignalRef, {
-      type: 'END',
-      callerCode: currentPasscode,
-      timestamp: Date.now()
-    });
+    if (currentPasscode) {
+      set(getSignalRef(), {
+        type: 'END',
+        callerCode: currentPasscode,
+        timestamp: Date.now()
+      });
+    }
     cleanUpCall();
   };
 
@@ -614,11 +625,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const endCall = () => {
-    set(callSignalRef, {
-      type: 'END',
-      callerCode: currentPasscode,
-      timestamp: Date.now()
-    });
+    if (currentPasscode) {
+      set(getSignalRef(), {
+        type: 'END',
+        callerCode: currentPasscode,
+        timestamp: Date.now()
+      });
+    }
     cleanUpCall();
   };
 
@@ -725,14 +738,14 @@ document.addEventListener('DOMContentLoaded', () => {
       playSound('nudge');
     }
 
-    set(animRef, {
+    set(getAnimRef(), {
       senderCode: currentPasscode,
       senderName: profiles[currentPasscode].name,
       animType: animType,
       timestamp: Date.now()
     });
 
-    push(messagesRef, {
+    push(getMessagesRef(), {
       senderCode: currentPasscode,
       senderName: profiles[currentPasscode].name,
       animType: animType,
@@ -753,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = messageInput.value.trim();
     if (!text) return;
 
-    push(messagesRef, {
+    push(getMessagesRef(), {
       senderCode: currentPasscode,
       senderName: profiles[currentPasscode].name,
       text: text,
@@ -764,6 +777,7 @@ document.addEventListener('DOMContentLoaded', () => {
     playSound('send');
     messageInput.value = '';
 
+    const myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${profiles[currentPasscode].name}`);
     set(myPresenceRef, {
       online: true,
       typing: false,
@@ -779,7 +793,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Typing Status
   let typingTimeout;
   messageInput.addEventListener('input', () => {
-    if (!myPresenceRef) return;
+    if (!currentPasscode || !profiles[currentPasscode]) return;
+    const myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${profiles[currentPasscode].name}`);
     set(myPresenceRef, {
       online: true,
       typing: true,
@@ -807,7 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const caption = prompt('Add a romantic polaroid caption:', 'Making memories together ♥');
-        push(messagesRef, {
+        push(getMessagesRef(), {
           senderCode: currentPasscode,
           senderName: profiles[currentPasscode].name,
           imgUrl: event.target.result,
