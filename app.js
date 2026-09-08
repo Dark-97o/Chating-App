@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const roomName = `secret-space-mau-sub`;
+    const roomName = `secretspacemausub`;
     const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
     const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
     const audioOnlyFlag = isVideo ? '' : '&webcam=0';
@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
     stopRingtone();
     incomingCallModal.classList.remove('active');
 
-    const roomName = `secret-space-mau-sub`;
+    const roomName = `secretspacemausub`;
     const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
     const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
     const isVideo = pendingOffer ? pendingOffer.isVideo : true;
