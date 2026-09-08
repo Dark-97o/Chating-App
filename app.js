@@ -5,6 +5,7 @@ import {
   ref, 
   push, 
   onValue, 
+  onChildAdded,
   set, 
   off,
   onDisconnect, 
@@ -131,11 +132,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let callTimerInterval = null;
   let ringtoneInterval = null;
 
+  let iceCandidatesQueue = [];
+
   const rtcConfig = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' },
       { urls: 'stun:stun.services.mozilla.com' }
     ]
   };
@@ -520,11 +526,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Clear previous call signals
+      // Reset candidates queue & clear previous call signals
+      iceCandidatesQueue = [];
       set(ref(db, `rooms/${currentRoomId}/callSignal`), null);
 
       localStream = await navigator.mediaDevices.getUserMedia({
-        video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
+        video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false,
         audio: true
       });
 
@@ -537,8 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       peerConnection.ontrack = (event) => {
         if (event.streams && event.streams[0]) {
-          remoteVideo.srcObject = event.streams[0];
-          remoteVideo.play().catch(() => {});
+          remoteStream = event.streams[0];
+          remoteVideo.srcObject = remoteStream;
+          remoteVideo.play().catch(e => console.log('Autoplay error:', e));
         }
       };
 
@@ -565,21 +573,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (answerData && answerData.callerCode !== currentPasscode && peerConnection) {
           if (peerConnection.signalingState !== 'stable') {
             await peerConnection.setRemoteDescription(new RTCSessionDescription(answerData.answer));
+            
+            // Flush candidate queue once remote description is set
+            while (iceCandidatesQueue.length > 0) {
+              const cand = iceCandidatesQueue.shift();
+              try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(cand));
+              } catch (e) {}
+            }
           }
         }
       });
       activeListeners.push(answerRef);
 
-      // Listen for Partner Candidates
+      // Listen for Partner Candidates via onChildAdded
       const partnerCode = profiles[currentPasscode].partnerCode;
       const partnerCandidatesRef = getCandidatesRef(partnerCode);
-      onValue(partnerCandidatesRef, async (snapshot) => {
-        const candidates = snapshot.val();
-        if (candidates && peerConnection && peerConnection.remoteDescription) {
-          for (const key in candidates) {
+      onChildAdded(partnerCandidatesRef, async (snapshot) => {
+        const candidateData = snapshot.val();
+        if (candidateData) {
+          if (peerConnection && peerConnection.remoteDescription) {
             try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(candidates[key]));
+              await peerConnection.addIceCandidate(new RTCIceCandidate(candidateData));
             } catch (e) {}
+          } else {
+            iceCandidatesQueue.push(candidateData);
           }
         }
       });
@@ -603,8 +621,9 @@ document.addEventListener('DOMContentLoaded', () => {
     incomingCallModal.classList.remove('active');
 
     try {
+      iceCandidatesQueue = [];
       localStream = await navigator.mediaDevices.getUserMedia({
-        video: pendingOffer.isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
+        video: pendingOffer.isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false,
         audio: true
       });
 
@@ -617,8 +636,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       peerConnection.ontrack = (event) => {
         if (event.streams && event.streams[0]) {
-          remoteVideo.srcObject = event.streams[0];
-          remoteVideo.play().catch(() => {});
+          remoteStream = event.streams[0];
+          remoteVideo.srcObject = remoteStream;
+          remoteVideo.play().catch(e => console.log('Autoplay error:', e));
         }
       };
 
@@ -629,6 +649,15 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       await peerConnection.setRemoteDescription(new RTCSessionDescription(pendingOffer.offer));
+
+      // Flush candidate queue once remote description is set
+      while (iceCandidatesQueue.length > 0) {
+        const cand = iceCandidatesQueue.shift();
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(cand));
+        } catch (e) {}
+      }
+
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
 
@@ -638,15 +667,17 @@ document.addEventListener('DOMContentLoaded', () => {
         timestamp: Date.now()
       });
 
-      // Listen for Partner Candidates
+      // Listen for Partner Candidates via onChildAdded
       const callerCandidatesRef = getCandidatesRef(pendingOffer.callerCode);
-      onValue(callerCandidatesRef, async (snapshot) => {
-        const candidates = snapshot.val();
-        if (candidates && peerConnection && peerConnection.remoteDescription) {
-          for (const key in candidates) {
+      onChildAdded(callerCandidatesRef, async (snapshot) => {
+        const candidateData = snapshot.val();
+        if (candidateData) {
+          if (peerConnection && peerConnection.remoteDescription) {
             try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(candidates[key]));
+              await peerConnection.addIceCandidate(new RTCIceCandidate(candidateData));
             } catch (e) {}
+          } else {
+            iceCandidatesQueue.push(candidateData);
           }
         }
       });
@@ -690,6 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
     remoteVideo.srcObject = null;
     isCallActive = false;
     pendingOffer = null;
+    iceCandidatesQueue = [];
     callModal.classList.remove('active');
     incomingCallModal.classList.remove('active');
   };
