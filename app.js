@@ -1,4 +1,4 @@
-// Firebase Realtime Database Integrated Couple Chat Logic with Romantic Animations
+// Firebase Realtime Database Integrated Couple Chat Logic with Lightweight High-Performance Animations
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { 
   getDatabase, 
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Audio Synthesizer (Web Audio API for Cute Sound FX & Kiss Smooch)
+  // Audio Synthesizer (Web Audio API)
   const playSound = (type) => {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -97,48 +97,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (type === 'send') {
         osc.frequency.setValueAtTime(440, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+      } else if (type === 'receive') {
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
         gain.gain.setValueAtTime(0.12, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.15);
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
-      } else if (type === 'receive') {
-        osc.frequency.setValueAtTime(600, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      } else if (type === 'kiss') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(700, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1100, ctx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         osc.start();
         osc.stop(ctx.currentTime + 0.2);
-      } else if (type === 'kiss') {
-        // Synthesize a cute kiss smooch sound
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.12);
-        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
       } else if (type === 'nudge') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
-        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
-        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
         osc.start();
-        osc.stop(ctx.currentTime + 0.5);
+        osc.stop(ctx.currentTime + 0.3);
       }
     } catch (e) {
       // Audio fallback
     }
   };
 
-  // Canvas Particle Animation Engine
+  // Ultra-Lightweight On-Demand Canvas Particle Engine
   const canvas = document.getElementById('heartCanvas');
   const ctx = canvas.getContext('2d');
   let particles = [];
+  let animId = null;
 
   const resizeCanvas = () => {
     canvas.width = window.innerWidth;
@@ -147,59 +144,48 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  class RomanticParticle {
+  class LightweightParticle {
     constructor(type = 'heart') {
       this.type = type;
-      this.x = canvas.width / 2 + (Math.random() - 0.5) * 120;
-      this.y = type === 'rose' ? -30 : canvas.height / 2 + (Math.random() - 0.5) * 60;
+      this.x = canvas.width / 2 + (Math.random() - 0.5) * 80;
+      this.y = type === 'rose' ? -20 : canvas.height / 2 + (Math.random() - 0.5) * 40;
       
       if (type === 'kiss') {
-        this.size = Math.random() * 32 + 28;
-        this.speedX = (Math.random() - 0.5) * 6;
-        this.speedY = -Math.random() * 5 - 2;
-        this.gravity = 0.08;
+        this.size = Math.random() * 24 + 24;
+        this.speedX = (Math.random() - 0.5) * 5;
+        this.speedY = -Math.random() * 4 - 2;
+        this.gravity = 0.09;
         this.opacity = 1;
-        this.rotation = (Math.random() - 0.5) * 0.4;
-        this.rotSpeed = (Math.random() - 0.5) * 0.05;
-        this.emoji = ['💋', '👩‍❤️‍💋‍👨', '💋', '❤️', '💋'][Math.floor(Math.random() * 5)];
+        this.emoji = ['💋', '💋', '❤️'][Math.floor(Math.random() * 3)];
       } else if (type === 'hug') {
-        this.size = Math.random() * 28 + 20;
-        this.speedX = (Math.random() - 0.5) * 9;
-        this.speedY = (Math.random() - 0.5) * 9;
+        this.size = Math.random() * 24 + 18;
+        this.speedX = (Math.random() - 0.5) * 7;
+        this.speedY = (Math.random() - 0.5) * 7;
         this.gravity = 0.02;
         this.opacity = 1;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.rotSpeed = (Math.random() - 0.5) * 0.1;
-        this.emoji = ['🫂', '🤗', '💖', '✨', '💛'][Math.floor(Math.random() * 5)];
+        this.emoji = ['🫂', '🤗', '💖'][Math.floor(Math.random() * 3)];
       } else if (type === 'rose') {
         this.x = Math.random() * canvas.width;
-        this.size = Math.random() * 22 + 16;
-        this.speedX = Math.sin(Math.random() * Math.PI) * 2;
-        this.speedY = Math.random() * 4 + 2;
+        this.size = Math.random() * 20 + 14;
+        this.speedX = (Math.random() - 0.5) * 2;
+        this.speedY = Math.random() * 3 + 2;
         this.gravity = 0.02;
         this.opacity = 1;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.rotSpeed = (Math.random() - 0.5) * 0.08;
-        this.emoji = ['🌹', '🥀', '🌸', '💐'][Math.floor(Math.random() * 4)];
+        this.emoji = ['🌹', '🌸'][Math.floor(Math.random() * 2)];
       } else if (type === 'ring') {
-        this.size = Math.random() * 30 + 22;
-        this.speedX = (Math.random() - 0.5) * 7;
-        this.speedY = -Math.random() * 6 - 2;
+        this.size = Math.random() * 26 + 18;
+        this.speedX = (Math.random() - 0.5) * 6;
+        this.speedY = -Math.random() * 5 - 2;
         this.gravity = 0.12;
         this.opacity = 1;
-        this.rotation = (Math.random() - 0.5) * 0.5;
-        this.rotSpeed = (Math.random() - 0.5) * 0.1;
-        this.emoji = ['💍', '💎', '✨', '💖', '👑'][Math.floor(Math.random() * 5)];
+        this.emoji = ['💍', '💎', '✨'][Math.floor(Math.random() * 3)];
       } else {
-        // Standard Heart
-        this.size = Math.random() * 18 + 12;
-        this.speedX = (Math.random() - 0.5) * 8;
-        this.speedY = (Math.random() - 0.8) * 8 - 3;
-        this.gravity = 0.15;
+        this.size = Math.random() * 16 + 12;
+        this.speedX = (Math.random() - 0.5) * 6;
+        this.speedY = (Math.random() - 0.8) * 6 - 2;
+        this.gravity = 0.12;
         this.opacity = 1;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.rotSpeed = (Math.random() - 0.5) * 0.1;
-        this.emoji = ['❤️', '💖', '🌹', '✨', '💋'][Math.floor(Math.random() * 5)];
+        this.emoji = ['❤️', '💖', '✨'][Math.floor(Math.random() * 3)];
       }
     }
 
@@ -207,37 +193,45 @@ document.addEventListener('DOMContentLoaded', () => {
       this.x += this.speedX;
       this.y += this.speedY;
       this.speedY += this.gravity;
-      this.opacity -= (this.type === 'rose' ? 0.008 : 0.015);
-      this.rotation += this.rotSpeed;
+      this.opacity -= 0.02; // Faster fade for smooth cleanup
     }
 
     draw() {
-      ctx.save();
-      ctx.translate(this.x, this.y);
-      ctx.rotate(this.rotation);
       ctx.globalAlpha = Math.max(0, this.opacity);
       ctx.font = `${this.size}px sans-serif`;
-      ctx.fillText(this.emoji, 0, 0);
-      ctx.restore();
+      ctx.fillText(this.emoji, this.x, this.y);
     }
   }
 
-  const triggerAnimation = (type, count = 35) => {
+  // Trigger lightweight particle burst (14 particles max for 60fps smoothness)
+  const triggerAnimation = (type, count = 14) => {
     for (let i = 0; i < count; i++) {
-      particles.push(new RomanticParticle(type));
+      particles.push(new LightweightParticle(type));
+    }
+    if (!animId) {
+      animId = requestAnimationFrame(animateLoop);
     }
   };
 
-  const animateParticles = () => {
+  const animateLoop = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p, index) => {
+    
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
       p.update();
       p.draw();
-      if (p.opacity <= 0 || p.y > canvas.height + 50) particles.splice(index, 1);
-    });
-    requestAnimationFrame(animateParticles);
+      if (p.opacity <= 0 || p.y > canvas.height + 40) {
+        particles.splice(i, 1);
+      }
+    }
+
+    if (particles.length > 0) {
+      animId = requestAnimationFrame(animateLoop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      animId = null; // Automatically stop loop when clear
+    }
   };
-  animateParticles();
 
   // Firebase Realtime Database Sync
   let messagesRef, myPresenceRef, partnerPresenceRef, animRef;
@@ -266,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lastSeen: serverTimestamp()
     });
 
-    // Partner Online & Typing Listener
+    // Partner Presence Listener
     onValue(partnerPresenceRef, (snapshot) => {
       const data = snapshot.val();
       if (data && data.online) {
@@ -287,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Realtime Messages Listener
+    // Messages Listener
     onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -306,11 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
       isInitialLoadComplete = true;
     });
 
-    // Realtime Animation Listener (Kiss, Hug, Rose, Ring)
+    // Animation Listener
     onValue(animRef, (snapshot) => {
       const animData = snapshot.val();
       if (animData && animData.sender !== currentRole && (Date.now() - animData.timestamp < 3000)) {
-        triggerAnimation(animData.animType, 45);
+        triggerAnimation(animData.animType, 16);
         if (animData.animType === 'kiss') {
           playSound('kiss');
         } else {
@@ -346,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     } else if (msg.type === 'anim') {
-      const animIcons = { kiss: '💋 Sent a Sweet Kiss!', hug: '🫂 Sent a Warm Hug!', rose: '🌹 Sent a Rose Shower!', ring: '💍 Sent Diamond Love!', nudge: '💖 Sent a Heart Burst!' };
+      const animIcons = { kiss: '💋 Sent a Kiss!', hug: '🫂 Sent a Warm Hug!', rose: '🌹 Sent a Rose Shower!', ring: '💍 Sent Diamond Love!', nudge: '💖 Sent a Heart Burst!' };
       contentHtml = `<div class="bubble" style="background: linear-gradient(135deg, #ff4b72, #ff7e5f); color: #fff;">${animIcons[msg.animType] || '💖 Sent Love Animation!'}</div>`;
     }
 
@@ -372,9 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   };
 
-  // Helper to Send Animation Trigger to Firebase
   const sendAnimationEvent = (animType) => {
-    triggerAnimation(animType, 45);
+    triggerAnimation(animType, 16);
     if (animType === 'kiss') {
       playSound('kiss');
     } else {
@@ -395,13 +388,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Event Listeners for Kiss, Hug, Rose, Ring Animation Buttons
+  // Button Listeners
   kissAnimBtn.addEventListener('click', () => sendAnimationEvent('kiss'));
   hugAnimBtn.addEventListener('click', () => sendAnimationEvent('hug'));
   roseAnimBtn.addEventListener('click', () => sendAnimationEvent('rose'));
   ringAnimBtn.addEventListener('click', () => sendAnimationEvent('ring'));
 
-  // Send Message Logic
+  // Send Text Message
   const handleSendMessage = () => {
     const text = messageInput.value.trim();
     if (!text) return;
@@ -428,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') handleSendMessage();
   });
 
-  // Typing Status Broadcast
+  // Typing Status
   let typingTimeout;
   messageInput.addEventListener('input', () => {
     set(myPresenceRef, {
@@ -447,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1500);
   });
 
-  // Nudge Heart Button
+  // Nudge Button
   nudgeHeartBtn.addEventListener('click', () => sendAnimationEvent('nudge'));
 
   // Photo Polaroid Upload
@@ -555,6 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Initialize Room & Firebase
+  // Initialize App
   initFirebaseRoom();
 });
