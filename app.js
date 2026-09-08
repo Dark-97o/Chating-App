@@ -650,29 +650,6 @@ document.addEventListener('DOMContentLoaded', () => {
   declineCallBtn.addEventListener('click', declineCall);
   endCallBtn.addEventListener('click', endCall);
 
-  toggleMicBtn.addEventListener('click', () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        toggleMicBtn.classList.toggle('off', !audioTrack.enabled);
-        toggleMicBtn.innerHTML = audioTrack.enabled ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
-      }
-    }
-  });
-
-  toggleCamBtn.addEventListener('click', () => {
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        toggleCamBtn.classList.toggle('off', !videoTrack.enabled);
-        toggleCamBtn.innerHTML = videoTrack.enabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
-        localVideo.style.display = videoTrack.enabled ? 'block' : 'none';
-      }
-    }
-  });
-
   const renderMessages = (messages) => {
     chatMessages.innerHTML = `
       <div class="date-divider">
