@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Two of Us | Couple Secret Space</title>
-  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing, romantic kiss animations, and couple vibes.">
+  <title>Two of Us | Mausikta & Subhranil's Secret Space</title>
+  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing, anime profile avatars, and romantic vibes.">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,23 +15,24 @@
   <!-- Floating Heart & Kiss Animation Canvas -->
   <canvas id="heartCanvas"></canvas>
 
+  <!-- Main Chat Viewport -->
   <div class="app-viewport">
     
     <!-- Top Header -->
     <header class="chat-header">
       <div class="partner-info">
         <div class="avatar-wrapper">
-          <img id="partnerAvatar" class="avatar-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Partner Avatar">
+          <img id="partnerAvatar" class="avatar-img" src="assets/subhranil.jpg" alt="Partner Avatar">
           <span class="status-dot" id="statusDot" title="Offline"></span>
         </div>
         <div class="partner-details">
-          <h2 id="partnerName">My Favorite Person <span class="couple-title-font">♥</span></h2>
+          <h2 id="partnerName">Subhranil <span class="couple-title-font">♥</span></h2>
           <span class="partner-status" id="partnerStatusText">Offline</span>
         </div>
       </div>
 
       <div class="header-actions">
-        <button class="icon-btn" id="roomSettingsBtn" title="Room & Pair Settings">⚙️</button>
+        <button class="icon-btn" id="joinModalTriggerBtn" title="Switch User / Room">👤</button>
         <button class="icon-btn" id="themeModalBtn" title="Switch Theme">🎨</button>
         <button class="icon-btn" id="lockAppBtn" title="Lock Space">🔒</button>
       </div>
@@ -40,11 +41,11 @@
     <!-- Togetherness Banner -->
     <div class="togetherness-bar">
       <div class="days-counter">
-        <span>💖</span>
-        <span id="togetherDaysText">Day 124 Together</span>
+        <img id="myAvatarThumb" class="thumb-avatar" src="assets/mausikta.jpg" alt="My Avatar">
+        <span id="myNameLabel">Mausikta</span>
       </div>
       <button class="room-badge" id="roomBadgeBtn">
-        <span>🔑 Secret Room:</span> <strong id="currentRoomCodeLabel">our-secret-space</strong>
+        <span>🔑 Room:</span> <strong id="currentRoomCodeLabel">our-secret-space</strong>
       </button>
     </div>
 
@@ -61,7 +62,7 @@
       <span class="dot"></span>
       <span class="dot"></span>
       <span class="dot"></span>
-      <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 6px;">Partner is typing...</span>
+      <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 6px;" id="typingTextLabel">Partner is typing...</span>
     </div>
 
     <!-- Romantic Animation Action Bar -->
@@ -114,26 +115,34 @@
 
   </div>
 
-  <!-- Room & Pair Settings Modal -->
-  <div class="modal-overlay" id="roomModal">
+  <!-- Join Secret Space Modal / Overlay -->
+  <div class="modal-overlay" id="joinModal">
     <div class="modal-card">
-      <h3 class="couple-title-font">Couple Pair Settings</h3>
-      <p>Configure secret room key & your role</p>
+      <h3 class="couple-title-font" style="font-size: 1.5rem;">Join Secret Space</h3>
+      <p>Enter your personal code to enter the room</p>
       
+      <div style="display: flex; justify-content: center; gap: 16px; margin: 16px 0 20px 0;">
+        <div class="anime-preview-card" id="mauPreview">
+          <img src="assets/mausikta.jpg" alt="Mausikta Anime Avatar">
+          <span>Mausikta (MAU)</span>
+        </div>
+        <div class="anime-preview-card" id="subPreview">
+          <img src="assets/subhranil.jpg" alt="Subhranil Anime Avatar">
+          <span>Subhranil (SUB)</span>
+        </div>
+      </div>
+
       <div style="text-align: left; margin-bottom: 12px;">
-        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Secret Room Code:</label>
-        <input type="text" id="roomCodeInput" class="modal-input" placeholder="e.g. love-2026" value="our-secret-space">
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Personal Passcode:</label>
+        <input type="text" id="passcodeInput" class="modal-input" placeholder="Enter 'MAU' or 'SUB'" style="text-transform: uppercase; font-weight: 600; letter-spacing: 2px;">
       </div>
 
       <div style="text-align: left; margin-bottom: 16px;">
-        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">My Role / Nickname:</label>
-        <select id="roleSelect" class="modal-input" style="background: rgba(20, 9, 24, 0.9);">
-          <option value="Person A">Person A (Alex)</option>
-          <option value="Person B">Person B (Sam)</option>
-        </select>
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Secret Room Code:</label>
+        <input type="text" id="roomCodeInput" class="modal-input" placeholder="e.g. our-secret-space" value="our-secret-space">
       </div>
 
-      <button class="action-btn-primary" id="saveRoomSettingsBtn">Save & Connect</button>
+      <button class="action-btn-primary" id="joinSpaceBtn">Enter Secret Space 💖</button>
     </div>
   </div>
 

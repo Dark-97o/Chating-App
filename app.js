@@ -1,4 +1,4 @@
-// Firebase Realtime Database Integrated Couple Chat Logic with Lightweight High-Performance Animations
+// Firebase Realtime Database Integrated Couple Chat Logic for Mausikta & Subhranil
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { 
   getDatabase, 
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const photoInput = document.getElementById('photoInput');
   const photoUploadTrigger = document.getElementById('photoUploadTrigger');
   const typingIndicator = document.getElementById('typingIndicator');
+  const typingTextLabel = document.getElementById('typingTextLabel');
   
   // Animation Buttons
   const kissAnimBtn = document.getElementById('kissAnimBtn');
@@ -49,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const partnerStatusText = document.getElementById('partnerStatusText');
   const statusDot = document.getElementById('statusDot');
   const currentRoomCodeLabel = document.getElementById('currentRoomCodeLabel');
+  const myAvatarThumb = document.getElementById('myAvatarThumb');
+  const myNameLabel = document.getElementById('myNameLabel');
 
   // Modals & Settings
   const themeModalBtn = document.getElementById('themeModalBtn');
@@ -56,37 +59,45 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeThemeBtn = document.getElementById('closeThemeBtn');
   const lockAppBtn = document.getElementById('lockAppBtn');
   const lockModal = document.getElementById('lockModal');
-  const roomSettingsBtn = document.getElementById('roomSettingsBtn');
+  const joinModalTriggerBtn = document.getElementById('joinModalTriggerBtn');
   const roomBadgeBtn = document.getElementById('roomBadgeBtn');
-  const roomModal = document.getElementById('roomModal');
+  const joinModal = document.getElementById('joinModal');
+  const passcodeInput = document.getElementById('passcodeInput');
   const roomCodeInput = document.getElementById('roomCodeInput');
-  const roleSelect = document.getElementById('roleSelect');
-  const saveRoomSettingsBtn = document.getElementById('saveRoomSettingsBtn');
+  const joinSpaceBtn = document.getElementById('joinSpaceBtn');
+  const mauPreview = document.getElementById('mauPreview');
+  const subPreview = document.getElementById('subPreview');
   const pinDots = document.querySelectorAll('.pin-dot');
   const keypad = document.getElementById('keypad');
 
-  // Application State
+  // Profiles Database (Mausikta & Subhranil)
+  const profiles = {
+    'MAU': {
+      code: 'MAU',
+      name: 'Mausikta',
+      avatar: 'assets/mausikta.jpg',
+      partnerCode: 'SUB',
+      partnerName: 'Subhranil ♥',
+      partnerAvatar: 'assets/subhranil.jpg'
+    },
+    'SUB': {
+      code: 'SUB',
+      name: 'Subhranil',
+      avatar: 'assets/subhranil.jpg',
+      partnerCode: 'MAU',
+      partnerName: 'Mausikta ♥',
+      partnerAvatar: 'assets/mausikta.jpg'
+    }
+  };
+
+  // State
+  let currentPasscode = localStorage.getItem('couple_user_code') || '';
   let currentRoomId = localStorage.getItem('couple_room_code') || 'our-secret-space';
-  let currentRole = localStorage.getItem('couple_user_role') || 'Person A';
   let pinCode = '';
   const correctPin = '1234';
   let isInitialLoadComplete = false;
 
-  // Role Metadata
-  const rolesData = {
-    'Person A': {
-      partnerRole: 'Person B',
-      partnerName: 'Sam ♥',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
-    },
-    'Person B': {
-      partnerRole: 'Person A',
-      partnerName: 'Alex ♥',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-    }
-  };
-
-  // Audio Synthesizer (Web Audio API)
+  // Audio Synthesizer
   const playSound = (type) => {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -131,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Ultra-Lightweight On-Demand Canvas Particle Engine
+  // On-Demand Particle Engine
   const canvas = document.getElementById('heartCanvas');
   const ctx = canvas.getContext('2d');
   let particles = [];
@@ -193,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
       this.x += this.speedX;
       this.y += this.speedY;
       this.speedY += this.gravity;
-      this.opacity -= 0.02; // Faster fade for smooth cleanup
+      this.opacity -= 0.02;
     }
 
     draw() {
@@ -203,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Trigger lightweight particle burst (14 particles max for 60fps smoothness)
   const triggerAnimation = (type, count = 14) => {
     for (let i = 0; i < count; i++) {
       particles.push(new LightweightParticle(type));
@@ -229,23 +239,34 @@ document.addEventListener('DOMContentLoaded', () => {
       animId = requestAnimationFrame(animateLoop);
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      animId = null; // Automatically stop loop when clear
+      animId = null;
     }
   };
 
-  // Firebase Realtime Database Sync
+  // Firebase Realtime Connection
   let messagesRef, myPresenceRef, partnerPresenceRef, animRef;
 
   const initFirebaseRoom = () => {
-    currentRoomCodeLabel.textContent = currentRoomId;
-    const partnerRole = rolesData[currentRole].partnerRole;
+    if (!profiles[currentPasscode]) {
+      joinModal.classList.add('active');
+      return;
+    }
 
-    partnerName.innerHTML = `${rolesData[currentRole].partnerName} <span class="couple-title-font">♥</span>`;
-    partnerAvatar.src = rolesData[currentRole].avatar;
+    const myProfile = profiles[currentPasscode];
+    const partnerProfile = profiles[myProfile.partnerCode];
+
+    // Update Header & Banner UI
+    currentRoomCodeLabel.textContent = currentRoomId;
+    myNameLabel.textContent = myProfile.name;
+    myAvatarThumb.src = myProfile.avatar;
+
+    partnerName.innerHTML = `${partnerProfile.name} <span class="couple-title-font">♥</span>`;
+    partnerAvatar.src = partnerProfile.avatar;
+    typingTextLabel.textContent = `${partnerProfile.name} is typing...`;
 
     messagesRef = ref(db, `rooms/${currentRoomId}/messages`);
-    myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${currentRole}`);
-    partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerRole}`);
+    myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${myProfile.name}`);
+    partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerProfile.name}`);
     animRef = ref(db, `rooms/${currentRoomId}/anim`);
 
     set(myPresenceRef, {
@@ -260,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lastSeen: serverTimestamp()
     });
 
-    // Partner Presence Listener
+    // Listen to Partner Online Status & Typing
     onValue(partnerPresenceRef, (snapshot) => {
       const data = snapshot.val();
       if (data && data.online) {
@@ -281,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Messages Listener
+    // Listen for Realtime Messages
     onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -290,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isInitialLoadComplete) {
           const lastMsg = msgList[msgList.length - 1];
-          if (lastMsg && lastMsg.sender !== currentRole) {
+          if (lastMsg && lastMsg.senderCode !== currentPasscode) {
             playSound('receive');
           }
         }
@@ -300,10 +321,10 @@ document.addEventListener('DOMContentLoaded', () => {
       isInitialLoadComplete = true;
     });
 
-    // Animation Listener
+    // Listen for Realtime Animations
     onValue(animRef, (snapshot) => {
       const animData = snapshot.val();
-      if (animData && animData.sender !== currentRole && (Date.now() - animData.timestamp < 3000)) {
+      if (animData && animData.senderCode !== currentPasscode && (Date.now() - animData.timestamp < 3000)) {
         triggerAnimation(animData.animType, 16);
         if (animData.animType === 'kiss') {
           playSound('kiss');
@@ -325,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const renderSingleMessage = (msg) => {
-    const isMe = msg.sender === currentRole;
+    const isMe = msg.senderCode === currentPasscode;
     const row = document.createElement('div');
     row.className = `message-row ${isMe ? 'me' : 'partner'}`;
 
@@ -367,6 +388,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const sendAnimationEvent = (animType) => {
+    if (!profiles[currentPasscode]) return;
+
     triggerAnimation(animType, 16);
     if (animType === 'kiss') {
       playSound('kiss');
@@ -375,20 +398,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     set(animRef, {
-      sender: currentRole,
+      senderCode: currentPasscode,
+      senderName: profiles[currentPasscode].name,
       animType: animType,
       timestamp: Date.now()
     });
 
     push(messagesRef, {
-      sender: currentRole,
+      senderCode: currentPasscode,
+      senderName: profiles[currentPasscode].name,
       animType: animType,
       timestamp: Date.now(),
       type: 'anim'
     });
   };
 
-  // Button Listeners
+  // Button Animation Event Listeners
   kissAnimBtn.addEventListener('click', () => sendAnimationEvent('kiss'));
   hugAnimBtn.addEventListener('click', () => sendAnimationEvent('hug'));
   roseAnimBtn.addEventListener('click', () => sendAnimationEvent('rose'));
@@ -396,11 +421,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Send Text Message
   const handleSendMessage = () => {
+    if (!profiles[currentPasscode]) return;
     const text = messageInput.value.trim();
     if (!text) return;
 
     push(messagesRef, {
-      sender: currentRole,
+      senderCode: currentPasscode,
+      senderName: profiles[currentPasscode].name,
       text: text,
       timestamp: Date.now(),
       type: 'text'
@@ -424,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Typing Status
   let typingTimeout;
   messageInput.addEventListener('input', () => {
+    if (!myPresenceRef) return;
     set(myPresenceRef, {
       online: true,
       typing: true,
@@ -447,12 +475,13 @@ document.addEventListener('DOMContentLoaded', () => {
   photoUploadTrigger.addEventListener('click', () => photoInput.click());
   photoInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file && profiles[currentPasscode]) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const caption = prompt('Add a romantic polaroid caption:', 'Making memories together ♥');
         push(messagesRef, {
-          sender: currentRole,
+          senderCode: currentPasscode,
+          senderName: profiles[currentPasscode].name,
           imgUrl: event.target.result,
           caption: caption || '',
           timestamp: Date.now(),
@@ -472,28 +501,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Room Settings Modal
-  const openRoomModal = () => {
-    roomCodeInput.value = currentRoomId;
-    roleSelect.value = currentRole;
-    roomModal.classList.add('active');
-  };
+  // Join Space / Code Handling
+  mauPreview.addEventListener('click', () => {
+    passcodeInput.value = 'MAU';
+  });
 
-  roomSettingsBtn.addEventListener('click', openRoomModal);
-  roomBadgeBtn.addEventListener('click', openRoomModal);
+  subPreview.addEventListener('click', () => {
+    passcodeInput.value = 'SUB';
+  });
 
-  saveRoomSettingsBtn.addEventListener('click', () => {
-    const newRoom = roomCodeInput.value.trim().toLowerCase() || 'our-secret-space';
-    const newRole = roleSelect.value;
+  joinSpaceBtn.addEventListener('click', () => {
+    const typedCode = passcodeInput.value.trim().toUpperCase();
+    const typedRoom = roomCodeInput.value.trim().toLowerCase() || 'our-secret-space';
 
-    currentRoomId = newRoom;
-    currentRole = newRole;
+    if (typedCode !== 'MAU' && typedCode !== 'SUB') {
+      alert('Invalid passcode! Please enter "MAU" for Mausikta or "SUB" for Subhranil.');
+      return;
+    }
 
+    currentPasscode = typedCode;
+    currentRoomId = typedRoom;
+
+    localStorage.setItem('couple_user_code', currentPasscode);
     localStorage.setItem('couple_room_code', currentRoomId);
-    localStorage.setItem('couple_user_role', currentRole);
 
-    roomModal.classList.remove('active');
+    joinModal.classList.remove('active');
     initFirebaseRoom();
+  });
+
+  joinModalTriggerBtn.addEventListener('click', () => {
+    passcodeInput.value = currentPasscode;
+    roomCodeInput.value = currentRoomId;
+    joinModal.classList.add('active');
+  });
+
+  roomBadgeBtn.addEventListener('click', () => {
+    passcodeInput.value = currentPasscode;
+    roomCodeInput.value = currentRoomId;
+    joinModal.classList.add('active');
   });
 
   // Theme Switching
@@ -548,6 +593,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Initialize App
-  initFirebaseRoom();
+  // Start App
+  if (currentPasscode && profiles[currentPasscode]) {
+    initFirebaseRoom();
+  } else {
+    joinModal.classList.add('active');
+  }
 });

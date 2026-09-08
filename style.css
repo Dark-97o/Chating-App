@@ -73,7 +73,7 @@ body {
   overflow: hidden;
 }
 
-/* Background Animated Canvas (Hardware Accelerated) */
+/* Background Animated Canvas */
 #heartCanvas {
   position: fixed;
   top: 0;
@@ -132,8 +132,8 @@ body {
 
 .avatar-wrapper {
   position: relative;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
 }
 
 .avatar-img {
@@ -227,8 +227,16 @@ body {
 .days-counter {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-weight: 500;
+}
+
+.thumb-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--accent-gold);
 }
 
 .room-badge {
@@ -463,6 +471,40 @@ body {
 
 .anim-icon {
   font-size: 1.05rem;
+}
+
+/* Anime Avatar Preview Cards in Join Modal */
+.anime-preview-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.anime-preview-card:hover {
+  border-color: var(--accent-rose);
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.05);
+}
+
+.anime-preview-card img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-gold);
+}
+
+.anime-preview-card span {
+  font-size: 0.76rem;
+  color: var(--text-main);
+  font-weight: 500;
 }
 
 /* Quick Reaction Bar */
