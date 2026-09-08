@@ -66,18 +66,21 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
-  width: 100%;
+html {
+  height: -webkit-fill-available;
   height: 100%;
+}
+
+body {
+  background: #000000;
+  color: var(--text-main);
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
   height: -webkit-fill-available;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: #000000;
-  color: var(--text-main);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -98,7 +101,7 @@ html, body {
 .app-viewport {
   width: 100%;
   max-width: 480px;
-  height: 100%;
+  height: 100vh;
   height: 100dvh;
   height: -webkit-fill-available;
   max-height: 900px;

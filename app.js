@@ -733,19 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // iOS WebKit Touch Lock Fix: Nudge scrollTop by 1px on touchstart to prevent page bounce locking
-  if (chatMessages) {
-    chatMessages.addEventListener('touchstart', () => {
-      const top = chatMessages.scrollTop;
-      const total = chatMessages.scrollHeight;
-      const current = top + chatMessages.offsetHeight;
-      if (top === 0) {
-        chatMessages.scrollTop = 1;
-      } else if (current >= total) {
-        chatMessages.scrollTop = top - 1;
-      }
-    }, { passive: true });
-  }
 
   const escapeHtml = (str) => {
     return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
