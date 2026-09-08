@@ -1,4 +1,4 @@
-// Firebase Realtime Database Integrated Couple Chat Logic with WebRTC 1-on-1 Video & Voice Calling
+// Firebase Realtime Database Integrated Couple Chat Logic for Mausikta & Subhranil
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { 
   getDatabase, 
@@ -6,6 +6,7 @@ import {
   push, 
   onValue, 
   set, 
+  off,
   onDisconnect, 
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
@@ -115,10 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Application State
-  let currentPasscode = localStorage.getItem('couple_user_code') || '';
+  // State (ALWAYS prompt profile selection every time the website is opened)
+  let currentPasscode = ''; // Force profile selection on every visit
   const currentRoomId = 'our-secret-space';
   let isInitialLoadComplete = false;
+  let activeListeners = [];
 
   // WebRTC State
   let peerConnection = null;
@@ -358,6 +360,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  let previousPasscode = '';
+
+  // Clean up existing listeners when switching users
+  const cleanupListeners = () => {
+    activeListeners.forEach(r => off(r));
+    activeListeners = [];
+  };
+
   // Firebase Realtime Connection & WebRTC Signaling
   const initFirebaseRoom = () => {
     if (!profiles[currentPasscode]) {
@@ -365,11 +375,27 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Mark previous user offline if switching identity
+    if (previousPasscode && previousPasscode !== currentPasscode && profiles[previousPasscode]) {
+      const prevProfile = profiles[previousPasscode];
+      const prevPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${prevProfile.name}`);
+      set(prevPresenceRef, {
+        online: false,
+        typing: false,
+        lastSeen: serverTimestamp()
+      });
+    }
+    previousPasscode = currentPasscode;
+
+    cleanupListeners();
+    isInitialLoadComplete = false;
+
     const myProfile = profiles[currentPasscode];
     const partnerProfile = profiles[myProfile.partnerCode];
 
     myNameLabel.textContent = myProfile.name;
     myAvatarThumb.src = myProfile.avatar;
+    messageInput.placeholder = `Write something sweet, ${myProfile.name}...`;
 
     partnerName.innerHTML = `${partnerProfile.name} <span class="couple-title-font">♥</span>`;
     partnerAvatar.src = partnerProfile.avatar;
@@ -414,9 +440,11 @@ document.addEventListener('DOMContentLoaded', () => {
         typingIndicator.classList.remove('active');
       }
     });
+    activeListeners.push(partnerPresenceRef);
 
     // Listen for Realtime Messages
-    onValue(getMessagesRef(), (snapshot) => {
+    const msgsRef = getMessagesRef();
+    onValue(msgsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const msgList = Object.values(data);
@@ -433,9 +461,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       isInitialLoadComplete = true;
     });
+    activeListeners.push(msgsRef);
 
     // Listen for Realtime Animations
-    onValue(getAnimRef(), (snapshot) => {
+    const animsRef = getAnimRef();
+    onValue(animsRef, (snapshot) => {
       const animData = snapshot.val();
       if (animData && animData.senderCode !== currentPasscode && (Date.now() - animData.timestamp < 3000)) {
         triggerAnimation(animData.animType, 16);
@@ -446,9 +476,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
+    activeListeners.push(animsRef);
 
     // WebRTC Realtime Firebase Signaling Listener
-    onValue(getSignalRef(), async (snapshot) => {
+    const signalRef = getSignalRef();
+    onValue(signalRef, async (snapshot) => {
       const signal = snapshot.val();
       if (!signal || signal.callerCode === currentPasscode) return;
 
@@ -469,11 +501,13 @@ document.addEventListener('DOMContentLoaded', () => {
         cleanUpCall();
       }
     });
+    activeListeners.push(signalRef);
   };
 
   // WebRTC Call Core Logic
   const startCall = async (isVideo = true) => {
     if (!currentPasscode || !profiles[currentPasscode]) {
+      alert('Please select your profile (MAU or SUB) before making a call!');
       joinModal.classList.add('active');
       return;
     }
@@ -531,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const acceptCall = async () => {
-    if (!pendingOffer || !profiles[currentPasscode]) return;
+    if (!pendingOffer || !currentPasscode || !profiles[currentPasscode]) return;
     stopRingtone();
     incomingCallModal.classList.remove('active');
 
@@ -680,6 +714,15 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToBottom();
   };
 
+  const sanitizeUrl = (url) => {
+    if (!url) return '';
+    const clean = String(url).trim();
+    if (clean.startsWith('data:image/') || clean.startsWith('https://') || clean.startsWith('http://') || clean.startsWith('assets/')) {
+      return clean;
+    }
+    return '';
+  };
+
   const renderSingleMessage = (msg) => {
     const isMe = msg.senderCode === currentPasscode;
     const row = document.createElement('div');
@@ -689,9 +732,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (msg.type === 'text') {
       contentHtml = `<div class="bubble">${escapeHtml(msg.text)}</div>`;
     } else if (msg.type === 'polaroid') {
+      const imgSrc = sanitizeUrl(msg.imgUrl);
       contentHtml = `
         <div class="polaroid-card">
-          <img class="polaroid-img" src="${msg.imgUrl}" alt="Couple Memory">
+          ${imgSrc ? `<img class="polaroid-img" src="${imgSrc}" alt="Couple Memory">` : `<div style="padding:10px; color:#666;">Image Unavailable</div>`}
           <div class="polaroid-caption">${escapeHtml(msg.caption || 'Our Moment ♥')}</div>
         </div>
       `;
@@ -723,7 +767,11 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const sendAnimationEvent = (animType) => {
-    if (!profiles[currentPasscode]) return;
+    if (!currentPasscode || !profiles[currentPasscode]) {
+      alert('Please select your profile (MAU or SUB) first!');
+      joinModal.classList.add('active');
+      return;
+    }
 
     triggerAnimation(animType, 16);
     if (animType === 'kiss') {
@@ -756,7 +804,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Send Text Message
   const handleSendMessage = () => {
-    if (!profiles[currentPasscode]) return;
+    if (!currentPasscode || !profiles[currentPasscode]) {
+      alert('Please select your profile (MAU or SUB) first!');
+      joinModal.classList.add('active');
+      return;
+    }
     const text = messageInput.value.trim();
     if (!text) return;
 
@@ -808,11 +860,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Nudge Button
   nudgeHeartBtn.addEventListener('click', () => sendAnimationEvent('nudge'));
 
-  // Photo Polaroid Upload
-  photoUploadTrigger.addEventListener('click', () => photoInput.click());
+  // Photo Polaroid Upload Guard
+  photoUploadTrigger.addEventListener('click', () => {
+    if (!currentPasscode || !profiles[currentPasscode]) {
+      alert('Please select your profile (MAU or SUB) first!');
+      joinModal.classList.add('active');
+      return;
+    }
+    photoInput.click();
+  });
+
   photoInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file && profiles[currentPasscode]) {
+    if (file && currentPasscode && profiles[currentPasscode]) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const caption = prompt('Add a romantic polaroid caption:', 'Making memories together ♥');
@@ -833,6 +893,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Emoji Stickers
   document.querySelectorAll('.sticker-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (!currentPasscode || !profiles[currentPasscode]) {
+        alert('Please select your profile (MAU or SUB) first!');
+        joinModal.classList.add('active');
+        return;
+      }
       messageInput.value += ` ${btn.dataset.emoji} `;
       messageInput.focus();
     });
@@ -843,33 +908,60 @@ document.addEventListener('DOMContentLoaded', () => {
   togetherCounterBtn.addEventListener('click', () => milestonesModal.classList.add('active'));
   closeMilestonesBtn.addEventListener('click', () => milestonesModal.classList.remove('active'));
 
-  // Join Space / Code Handling
+  // Select Profile Handler
+  const selectProfile = (code) => {
+    if (code !== 'MAU' && code !== 'SUB') {
+      alert('Invalid passcode! Please click Mausikta or Subhranil avatar, or enter "MAU" / "SUB".');
+      return;
+    }
+    currentPasscode = code;
+    passcodeInput.value = code;
+    joinModal.classList.remove('active');
+    initFirebaseRoom();
+  };
+
+  // Join Space / Profile Card Selection
   mauPreview.addEventListener('click', () => {
-    passcodeInput.value = 'MAU';
+    selectProfile('MAU');
   });
 
   subPreview.addEventListener('click', () => {
-    passcodeInput.value = 'SUB';
+    selectProfile('SUB');
+  });
+
+  passcodeInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      selectProfile(passcodeInput.value.trim().toUpperCase());
+    }
   });
 
   joinSpaceBtn.addEventListener('click', () => {
-    const typedCode = passcodeInput.value.trim().toUpperCase();
-
-    if (typedCode !== 'MAU' && typedCode !== 'SUB') {
-      alert('Invalid passcode! Please enter "MAU" for Mausikta or "SUB" for Subhranil.');
-      return;
-    }
-
-    currentPasscode = typedCode;
-    localStorage.setItem('couple_user_code', currentPasscode);
-
-    joinModal.classList.remove('active');
-    initFirebaseRoom();
+    selectProfile(passcodeInput.value.trim().toUpperCase());
   });
 
   joinModalTriggerBtn.addEventListener('click', () => {
     passcodeInput.value = currentPasscode;
     joinModal.classList.add('active');
+  });
+
+  // Window unload cleanup (mark presence offline, terminate ongoing call)
+  window.addEventListener('beforeunload', () => {
+    if (currentPasscode && profiles[currentPasscode]) {
+      const myProfile = profiles[currentPasscode];
+      const myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${myProfile.name}`);
+      set(myPresenceRef, {
+        online: false,
+        typing: false,
+        lastSeen: serverTimestamp()
+      });
+    }
+    if (isCallActive && currentPasscode) {
+      set(getSignalRef(), {
+        type: 'END',
+        callerCode: currentPasscode,
+        timestamp: Date.now()
+      });
+    }
   });
 
   // Theme Switching
@@ -890,10 +982,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
 
-  // Start App
-  if (currentPasscode && profiles[currentPasscode]) {
-    initFirebaseRoom();
-  } else {
-    joinModal.classList.add('active');
-  }
+  // ALWAYS pop up Join Modal every time website is opened
+  joinModal.classList.add('active');
 });
