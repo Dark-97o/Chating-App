@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       name: 'Mausikta',
       avatar: 'assets/mausikta.jpg',
       partnerCode: 'SUB',
-      partnerName: 'Subhranil ♥',
+      partnerName: 'Subhranil',
       partnerAvatar: 'assets/subhranil.jpg'
     },
     'SUB': {
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       name: 'Subhranil',
       avatar: 'assets/subhranil.jpg',
       partnerCode: 'MAU',
-      partnerName: 'Mausikta ♥',
+      partnerName: 'Mausikta',
       partnerAvatar: 'assets/mausikta.jpg'
     }
   };
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const myProfile = profiles[currentPasscode];
     const partnerProfile = profiles[myProfile.partnerCode];
 
-    myNameLabel.textContent = myProfile.name;
+    if (myNameLabel) myNameLabel.textContent = myProfile.name;
     myAvatarThumb.src = myProfile.avatar;
     messageInput.placeholder = `Write something sweet, ${myProfile.name}...`;
 
