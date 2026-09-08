@@ -78,16 +78,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeModalBtn = document.getElementById('themeModalBtn');
   const themeModal = document.getElementById('themeModal');
   const closeThemeBtn = document.getElementById('closeThemeBtn');
-  const lockAppBtn = document.getElementById('lockAppBtn');
-  const lockModal = document.getElementById('lockModal');
   const joinModalTriggerBtn = document.getElementById('joinModalTriggerBtn');
   const joinModal = document.getElementById('joinModal');
   const passcodeInput = document.getElementById('passcodeInput');
   const joinSpaceBtn = document.getElementById('joinSpaceBtn');
   const mauPreview = document.getElementById('mauPreview');
   const subPreview = document.getElementById('subPreview');
-  const pinDots = document.querySelectorAll('.pin-dot');
-  const keypad = document.getElementById('keypad');
 
   // Milestones Modal Elements
   const milestonesBtn = document.getElementById('milestonesBtn');
@@ -122,8 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Application State
   let currentPasscode = localStorage.getItem('couple_user_code') || '';
   const currentRoomId = 'our-secret-space';
-  let pinCode = '';
-  const correctPin = '1234';
   let isInitialLoadComplete = false;
 
   // WebRTC State
@@ -533,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         alert('Unable to start call: ' + err.message);
       }
-    };
+    }
   };
 
   const acceptCall = async () => {
@@ -895,40 +889,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (savedTheme) {
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
-
-  // PIN Lock Logic
-  lockAppBtn.addEventListener('click', () => lockModal.classList.add('active'));
-
-  keypad.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('key-btn')) return;
-    const key = e.target.dataset.key;
-
-    if (key === 'C') {
-      pinCode = '';
-    } else if (key === '✓') {
-      if (pinCode === correctPin) {
-        lockModal.classList.remove('active');
-        pinCode = '';
-      } else {
-        alert('Incorrect PIN! Try 1234');
-        pinCode = '';
-      }
-    } else if (pinCode.length < 4) {
-      pinCode += key;
-    }
-
-    updatePinDots();
-  });
-
-  const updatePinDots = () => {
-    pinDots.forEach((dot, index) => {
-      if (index < pinCode.length) {
-        dot.classList.add('filled');
-      } else {
-        dot.classList.remove('filled');
-      }
-    });
-  };
 
   // Start App
   if (currentPasscode && profiles[currentPasscode]) {
