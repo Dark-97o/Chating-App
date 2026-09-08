@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 
@@ -120,6 +121,8 @@
       <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
       <video id="localVideo" class="local-video-pip" autoplay playsinline muted></video>
       
+      <div id="jitsiContainer" style="display: none; width: 100%; height: 100%; z-index: 5; background: #000;"></div>
+
       <!-- Call Active Header Info -->
       <div class="call-header-info">
         <img id="callPartnerAvatar" class="call-avatar-thumb" src="assets/subhranil.jpg" alt="Partner Avatar">
@@ -127,6 +130,9 @@
           <h4 id="callPartnerName">Subhranil</h4>
           <span id="callDurationLabel" class="call-status-badge">Connected 00:00</span>
         </div>
+        <button class="call-action-btn" id="switchHdRoomBtn" style="margin-left: 12px; padding: 4px 10px; font-size: 0.72rem; background: var(--accent-rose); color: #fff; border: none; border-radius: 12px; cursor: pointer;" title="Switch to HD Encrypted Room">
+          <i class="fa-solid fa-bolt"></i> HD Room
+        </button>
       </div>
 
       <!-- In-Call Control Toolbar -->

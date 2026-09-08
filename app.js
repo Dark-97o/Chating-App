@@ -123,8 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let isInitialLoadComplete = false;
   let activeListeners = [];
 
-  // WebRTC State
+  // WebRTC & PeerJS State
   let peerConnection = null;
+  let peer = null;
+  let activePeerCall = null;
   let localStream = null;
   let remoteStream = null;
   let pendingOffer = null;
@@ -422,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const myProfile = profiles[currentPasscode];
     const partnerProfile = profiles[myProfile.partnerCode];
 
-    if (myNameLabel) myNameLabel.textContent = myProfile.name;
+    myNameLabel.textContent = myProfile.name;
     myAvatarThumb.src = myProfile.avatar;
     messageInput.placeholder = `Write something sweet, ${myProfile.name}...`;
 
@@ -433,6 +435,23 @@ document.addEventListener('DOMContentLoaded', () => {
     incomingCallerAvatar.src = partnerProfile.avatar;
     incomingCallerName.textContent = partnerProfile.name;
     typingTextLabel.textContent = `${partnerProfile.name} is typing...`;
+
+    // Initialize PeerJS for 1-on-1 WebRTC Call
+    if (window.Peer) {
+      const myPeerId = `couplespace-secret-${currentPasscode.toLowerCase()}`;
+      if (peer) {
+        try { peer.destroy(); } catch (e) {}
+      }
+      peer = new window.Peer(myPeerId, { config: rtcConfig });
+
+      peer.on('call', (call) => {
+        activePeerCall = call;
+        pendingOffer = { isVideo: true, callerCode: partnerProfile.code };
+        incomingCallTypeText.textContent = 'Incoming Video / Audio Call...';
+        incomingCallModal.classList.add('active');
+        startRingtone();
+      });
+    }
 
     const myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${myProfile.name}`);
     const partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerProfile.name}`);
@@ -765,15 +784,45 @@ document.addEventListener('DOMContentLoaded', () => {
       peerConnection.close();
       peerConnection = null;
     }
+    if (activePeerCall) {
+      try { activePeerCall.close(); } catch(e) {}
+      activePeerCall = null;
+    }
+
+    const jitsiContainer = document.getElementById('jitsiContainer');
+    if (jitsiContainer) {
+      jitsiContainer.innerHTML = '';
+      jitsiContainer.style.display = 'none';
+    }
 
     localVideo.srcObject = null;
     remoteVideo.srcObject = null;
+    localVideo.style.display = 'block';
+    remoteVideo.style.display = 'block';
     isCallActive = false;
     pendingOffer = null;
     iceCandidatesQueue = [];
     callModal.classList.remove('active');
     incomingCallModal.classList.remove('active');
   };
+
+  // Switch to HD Encrypted Room Fallback
+  const switchHdRoomBtn = document.getElementById('switchHdRoomBtn');
+  if (switchHdRoomBtn) {
+    switchHdRoomBtn.addEventListener('click', () => {
+      const jitsiContainer = document.getElementById('jitsiContainer');
+      if (jitsiContainer) {
+        const roomName = `our-secret-space-mausikta-subhranil-2023`;
+        const jitsiUrl = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false`;
+        
+        jitsiContainer.innerHTML = `<iframe src="${jitsiUrl}" style="width:100%; height:100%; border:none;" allow="camera; microphone; display-capture; autoplay; clipboard-write;"></iframe>`;
+        jitsiContainer.style.display = 'block';
+        remoteVideo.style.display = 'none';
+        localVideo.style.display = 'none';
+        callModal.classList.add('active');
+      }
+    });
+  }
 
   const endCall = () => {
     if (currentPasscode) {
