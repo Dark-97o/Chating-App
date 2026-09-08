@@ -12,7 +12,7 @@
   --glass-header: rgba(20, 9, 24, 0.75);
   --msg-me-bg: linear-gradient(135deg, #ff4b72 0%, #d62454 100%);
   --msg-me-text: #ffffff;
-  --msg-partner-bg: rgba(255, 255, 255, 0.08);
+  --msg-partner-bg: rgba(255, 255, 255, 0.12);
   --msg-partner-text: #f3e9f4;
   --text-main: #fcf6fc;
   --text-muted: #b89db9;
@@ -21,6 +21,7 @@
   --radius-xl: 24px;
   --radius-lg: 16px;
   --radius-md: 12px;
+  --wallpaper-overlay: linear-gradient(rgba(18, 9, 24, 0.65), rgba(18, 9, 24, 0.75));
 }
 
 [data-theme="cyber-neon"] {
@@ -33,10 +34,11 @@
   --glass-border: rgba(0, 240, 255, 0.2);
   --glass-header: rgba(10, 4, 20, 0.85);
   --msg-me-bg: linear-gradient(135deg, #00f0ff 0%, #7000ff 100%);
-  --msg-partner-bg: rgba(255, 0, 127, 0.12);
+  --msg-partner-bg: rgba(255, 0, 127, 0.15);
   --msg-partner-text: #f0e6ff;
   --text-main: #f0e9ff;
   --text-muted: #9c88be;
+  --wallpaper-overlay: linear-gradient(rgba(10, 4, 20, 0.75), rgba(10, 4, 20, 0.82));
 }
 
 [data-theme="sunset-glow"] {
@@ -49,10 +51,11 @@
   --glass-border: rgba(255, 180, 150, 0.18);
   --glass-header: rgba(25, 9, 15, 0.8);
   --msg-me-bg: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-  --msg-partner-bg: rgba(255, 255, 255, 0.1);
+  --msg-partner-bg: rgba(255, 255, 255, 0.14);
   --msg-partner-text: #fff3ee;
   --text-main: #fff5f0;
   --text-muted: #c9a89d;
+  --wallpaper-overlay: linear-gradient(rgba(25, 9, 15, 0.65), rgba(25, 9, 15, 0.78));
 }
 
 * {
@@ -64,7 +67,7 @@
 }
 
 body {
-  background: var(--bg-gradient);
+  background: var(--wallpaper-overlay), url('assets/wallpaper.jpg') center/cover no-repeat fixed;
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
@@ -214,7 +217,7 @@ body {
 
 /* Couple Banner / Counter Bar */
 .togetherness-bar {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.25);
   border-bottom: 1px solid var(--glass-border);
   padding: 8px 16px;
   font-size: 0.78rem;
@@ -256,7 +259,7 @@ body {
   border-color: var(--accent-rose);
 }
 
-/* Messages Area */
+/* Messages Area with Wallpaper Background */
 .chat-messages {
   flex: 1;
   padding: 20px 16px;
@@ -265,6 +268,7 @@ body {
   flex-direction: column;
   gap: 14px;
   scroll-behavior: smooth;
+  background: var(--wallpaper-overlay), url('assets/wallpaper.jpg') center/cover no-repeat;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -283,8 +287,9 @@ body {
 }
 
 .date-divider span {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 4px 12px;
+  background: rgba(10, 4, 15, 0.6);
+  backdrop-filter: blur(8px);
+  padding: 4px 14px;
   border-radius: 20px;
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -318,7 +323,8 @@ body {
   word-wrap: break-word;
   font-size: 0.94rem;
   line-height: 1.45;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
 }
 
 .message-row.me .bubble {
@@ -339,7 +345,7 @@ body {
   background: #ffffff;
   padding: 8px 8px 14px 8px;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   transform: rotate(-1.5deg);
   max-width: 240px;
 }
@@ -366,11 +372,12 @@ body {
 /* Message Meta */
 .msg-meta {
   font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
   margin-top: 4px;
   display: flex;
   align-items: center;
   gap: 4px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
 .message-row.me .msg-meta {
@@ -383,7 +390,8 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--msg-partner-bg);
+  background: rgba(18, 9, 24, 0.75);
+  backdrop-filter: blur(10px);
   padding: 10px 16px;
   border-radius: 20px;
   border: 1px solid var(--glass-border);
@@ -421,8 +429,9 @@ body {
   display: flex;
   justify-content: space-around;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(18, 9, 24, 0.8);
   border-top: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
 }
 
 .anim-btn {
@@ -512,7 +521,7 @@ body {
   display: flex;
   justify-content: space-around;
   padding: 6px 16px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.3);
   border-top: 1px solid var(--glass-border);
 }
 
@@ -622,7 +631,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 4, 15, 0.85);
+  background: rgba(10, 4, 15, 0.88);
   backdrop-filter: blur(12px);
   z-index: 200;
   display: flex;
