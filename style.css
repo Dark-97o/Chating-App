@@ -1024,3 +1024,120 @@ body {
   background: var(--accent-rose);
   color: #fff;
 }
+
+/* Compact Mobile Optimization for Smaller iPhones & Devices */
+@media (max-width: 400px) {
+  .chat-header {
+    padding: 10px 12px;
+    padding-top: max(10px, env(safe-area-inset-top));
+  }
+
+  .avatar-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .partner-details h2 {
+    font-size: 0.96rem;
+  }
+
+  .partner-status {
+    font-size: 0.72rem;
+  }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .togetherness-bar {
+    padding: 6px 12px;
+    font-size: 0.72rem;
+  }
+
+  .thumb-avatar {
+    width: 20px;
+    height: 20px;
+  }
+
+  .chat-messages {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .message-row {
+    max-width: 88%;
+  }
+
+  .bubble {
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+
+  .polaroid-card {
+    max-width: 200px;
+    padding: 6px 6px 10px 6px;
+  }
+
+  .animation-actions-bar {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .anim-btn {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+    gap: 3px;
+  }
+
+  .anim-icon {
+    font-size: 0.95rem;
+  }
+
+  .quick-stickers-bar {
+    padding: 4px 8px;
+  }
+
+  .sticker-btn {
+    font-size: 1.05rem;
+  }
+
+  .chat-input-area {
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) 10px;
+    gap: 6px;
+  }
+
+  .chat-input {
+    padding: 8px 36px 8px 12px;
+    font-size: 0.86rem;
+  }
+
+  .send-btn, .heart-nudge-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+  }
+
+  .modal-card {
+    padding: 20px 16px;
+    max-width: 92%;
+  }
+
+  .modal-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .anime-preview-card {
+    padding: 8px 10px;
+  }
+
+  .anime-preview-card img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .anime-preview-card span {
+    font-size: 0.72rem;
+  }
+}
