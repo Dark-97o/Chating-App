@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // UI Elements
   const chatMessages = document.getElementById('chatMessages');
+  const scrollDownBtn = document.getElementById('scrollDownBtn');
   const messageInput = document.getElementById('messageInput');
   const sendBtn = document.getElementById('sendBtn');
   const nudgeHeartBtn = document.getElementById('nudgeHeartBtn');
@@ -702,9 +703,29 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToBottom();
   };
 
-  const scrollToBottom = () => {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+  const scrollToBottom = (smooth = false) => {
+    if (smooth) {
+      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+    } else {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   };
+
+  // Scroll to Bottom Button Visibility & Click Handler
+  if (chatMessages && scrollDownBtn) {
+    chatMessages.addEventListener('scroll', () => {
+      const distanceToBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
+      if (distanceToBottom > 120) {
+        scrollDownBtn.classList.add('visible');
+      } else {
+        scrollDownBtn.classList.remove('visible');
+      }
+    });
+
+    scrollDownBtn.addEventListener('click', () => {
+      scrollToBottom(true);
+    });
+  }
 
   const escapeHtml = (str) => {
     return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
