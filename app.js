@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Call Elements
   const videoCallBtn = document.getElementById('videoCallBtn');
-  const audioCallBtn = document.getElementById('audioCallBtn');
   const callModal = document.getElementById('callModal');
   const callIframe = document.getElementById('callIframe');
   const callPartnerAvatar = document.getElementById('callPartnerAvatar');
@@ -645,7 +644,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Call Event Handlers
   videoCallBtn.addEventListener('click', () => startCall(true));
-  audioCallBtn.addEventListener('click', () => startCall(false));
   acceptCallBtn.addEventListener('click', acceptCall);
   declineCallBtn.addEventListener('click', declineCall);
   if (closeCallModalBtn) closeCallModalBtn.addEventListener('click', endCall);
