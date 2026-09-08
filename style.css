@@ -66,24 +66,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html {
-  height: -webkit-fill-available;
-  height: 100%;
-}
-
 body {
   background: #000000;
   color: var(--text-main);
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  height: -webkit-fill-available;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 /* Background Animated Canvas */
@@ -94,7 +84,9 @@ body {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 1;
+  z-index: 100;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* Main Container Frame */
@@ -103,7 +95,6 @@ body {
   max-width: 480px;
   height: 100vh;
   height: 100dvh;
-  height: -webkit-fill-available;
   max-height: 900px;
   display: flex;
   flex-direction: column;
@@ -114,7 +105,8 @@ body {
   box-shadow: var(--shadow-glow);
   position: relative;
   overflow: hidden;
-  z-index: 2;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 @media (min-width: 520px) {
@@ -539,26 +531,18 @@ body {
   color: var(--text-muted);
 }
 
-/* Messages Area Wrapper — iOS Safari needs a relative container with known height */
-.chat-messages-wrapper {
-  flex: 1 1 0px;
-  min-height: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Messages Area — absolutely positioned inside wrapper for iOS WebKit scroll isolation */
+/* Messages Area */
 .chat-messages {
-  position: absolute;
-  inset: 0;
+  flex: 1;
   padding: 20px 16px;
-  overflow-y: scroll;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  scroll-behavior: smooth;
   background: var(--wallpaper-overlay), url('assets/wallpaper.jpg') center/cover no-repeat;
+  position: relative;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -573,7 +557,7 @@ body {
 /* Floating Scroll Down Button */
 .scroll-down-btn {
   position: absolute;
-  bottom: 16px;
+  bottom: 120px;
   right: 16px;
   width: 42px;
   height: 42px;
