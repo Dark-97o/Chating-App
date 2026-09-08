@@ -115,13 +115,10 @@
 
   </div>
 
-  <!-- Live WebRTC Call Fullscreen Overlay -->
+  <!-- Live Call Fullscreen Overlay -->
   <div class="modal-overlay" id="callModal">
     <div class="call-container">
-      <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
-      <video id="localVideo" class="local-video-pip" autoplay playsinline muted></video>
-      
-      <div id="jitsiContainer" style="display: none; width: 100%; height: 100%; z-index: 5; background: #000;"></div>
+      <iframe id="callIframe" style="width: 100%; height: 100%; border: none; background: #000;" allow="camera; microphone; display-capture; autoplay; clipboard-write;"></iframe>
 
       <!-- Call Active Header Info -->
       <div class="call-header-info">
@@ -130,15 +127,10 @@
           <h4 id="callPartnerName">Subhranil</h4>
           <span id="callDurationLabel" class="call-status-badge">Connected 00:00</span>
         </div>
-        <button class="call-action-btn" id="switchHdRoomBtn" style="margin-left: 12px; padding: 4px 10px; font-size: 0.72rem; background: var(--accent-rose); color: #fff; border: none; border-radius: 12px; cursor: pointer;" title="Instant Zero-Login HD Room">
-          <i class="fa-solid fa-bolt"></i> Instant Room (No Login)
-        </button>
       </div>
 
-      <!-- In-Call Control Toolbar -->
+      <!-- In-Call Control Toolbar (Single Clean End Call Button) -->
       <div class="call-controls-bar">
-        <button class="call-control-btn" id="toggleMicBtn" title="Toggle Microphone"><i class="fa-solid fa-microphone"></i></button>
-        <button class="call-control-btn" id="toggleCamBtn" title="Toggle Camera"><i class="fa-solid fa-video"></i></button>
         <button class="call-control-btn end-call" id="endCallBtn" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
       </div>
     </div>

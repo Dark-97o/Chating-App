@@ -55,17 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const myNameLabel = document.getElementById('myNameLabel');
   const togetherDaysText = document.getElementById('togetherDaysText');
 
-  // WebRTC Call Elements
+  // Call Elements
   const videoCallBtn = document.getElementById('videoCallBtn');
   const audioCallBtn = document.getElementById('audioCallBtn');
   const callModal = document.getElementById('callModal');
-  const remoteVideo = document.getElementById('remoteVideo');
-  const localVideo = document.getElementById('localVideo');
+  const callIframe = document.getElementById('callIframe');
   const callPartnerAvatar = document.getElementById('callPartnerAvatar');
   const callPartnerName = document.getElementById('callPartnerName');
   const callDurationLabel = document.getElementById('callDurationLabel');
-  const toggleMicBtn = document.getElementById('toggleMicBtn');
-  const toggleCamBtn = document.getElementById('toggleCamBtn');
   const endCallBtn = document.getElementById('endCallBtn');
 
   // Incoming Call Elements
@@ -551,213 +548,53 @@ document.addEventListener('DOMContentLoaded', () => {
     activeListeners.push(endRef);
   };
 
-  // WebRTC Call Core Logic
-  const startCall = async (isVideo = true) => {
+  // Call Core Logic (Default Zero-Login Video/Audio Feed)
+  const startCall = (isVideo = true) => {
     if (!currentPasscode || !profiles[currentPasscode]) {
       alert('Please select your profile (MAU or SUB) before making a call!');
       joinModal.classList.add('active');
       return;
     }
 
-    try {
-      // Reset candidates queue & clear previous call signals
-      iceCandidatesQueue = [];
-      set(ref(db, `rooms/${currentRoomId}/callSignal`), null);
+    const roomName = `our-secret-space-mausikta-subhranil`;
+    const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
+    const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
+    const audioOnlyFlag = isVideo ? '' : '&webcam=0';
+    const zeroLoginUrl = `https://vdo.ninja/?room=${roomName}&push=${myPush}&view=${partnerView}&autostart=1&nobuttons=0&quality=0${audioOnlyFlag}`;
 
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: isVideo ? { facingMode: "user" } : false,
-          audio: true
-        });
-      } catch (e1) {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: isVideo,
-          audio: true
-        });
-      }
-
-      localVideo.srcObject = localStream;
-      localVideo.style.display = isVideo ? 'block' : 'none';
-
-      peerConnection = new RTCPeerConnection(rtcConfig);
-
-      remoteStream = new MediaStream();
-      remoteVideo.srcObject = remoteStream;
-
-      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-      peerConnection.ontrack = (event) => {
-        if (event.streams && event.streams[0]) {
-          event.streams[0].getTracks().forEach(t => {
-            if (!remoteStream.getTracks().includes(t)) {
-              remoteStream.addTrack(t);
-            }
-          });
-        } else if (event.track) {
-          if (!remoteStream.getTracks().includes(event.track)) {
-            remoteStream.addTrack(event.track);
-          }
-        }
-        remoteVideo.play().catch(e => console.log('Autoplay error:', e));
-      };
-
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          push(getCandidatesRef(currentPasscode), event.candidate.toJSON());
-        }
-      };
-
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-
-      set(getOfferRef(), {
-        callerCode: currentPasscode,
-        isVideo: isVideo,
-        offer: { type: offer.type, sdp: offer.sdp },
-        timestamp: Date.now()
-      });
-
-      // Listen for Answer
-      const answerRef = getAnswerRef();
-      onValue(answerRef, async (snapshot) => {
-        const answerData = snapshot.val();
-        if (answerData && answerData.callerCode !== currentPasscode && peerConnection) {
-          if (peerConnection.signalingState !== 'stable') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(answerData.answer));
-            
-            // Flush candidate queue once remote description is set
-            while (iceCandidatesQueue.length > 0) {
-              const cand = iceCandidatesQueue.shift();
-              try {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(cand));
-              } catch (e) {}
-            }
-          }
-        }
-      });
-      activeListeners.push(answerRef);
-
-      // Listen for Partner Candidates via onChildAdded
-      const partnerCode = profiles[currentPasscode].partnerCode;
-      const partnerCandidatesRef = getCandidatesRef(partnerCode);
-      onChildAdded(partnerCandidatesRef, async (snapshot) => {
-        const candidateData = snapshot.val();
-        if (candidateData) {
-          if (peerConnection && peerConnection.remoteDescription) {
-            try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(candidateData));
-            } catch (e) {}
-          } else {
-            iceCandidatesQueue.push(candidateData);
-          }
-        }
-      });
-      activeListeners.push(partnerCandidatesRef);
-
-      isCallActive = true;
-      callModal.classList.add('active');
-      startCallTimer();
-    } catch (err) {
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        alert('Camera or Microphone permission was denied. Please allow camera and mic permissions in your browser bar!');
-      } else {
-        alert('Unable to start call: ' + err.message);
-      }
+    if (callIframe) {
+      callIframe.src = zeroLoginUrl;
     }
+    callModal.classList.add('active');
+    isCallActive = true;
+    startCallTimer();
+
+    // Trigger ringtone on partner's phone
+    set(getOfferRef(), {
+      callerCode: currentPasscode,
+      isVideo: isVideo,
+      timestamp: Date.now()
+    });
   };
 
-  const acceptCall = async () => {
-    if (!pendingOffer || !currentPasscode || !profiles[currentPasscode]) return;
+  const acceptCall = () => {
+    if (!currentPasscode || !profiles[currentPasscode]) return;
     stopRingtone();
     incomingCallModal.classList.remove('active');
 
-    try {
-      iceCandidatesQueue = [];
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: pendingOffer.isVideo ? { facingMode: "user" } : false,
-          audio: true
-        });
-      } catch (e1) {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: pendingOffer.isVideo,
-          audio: true
-        });
-      }
+    const roomName = `our-secret-space-mausikta-subhranil`;
+    const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
+    const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
+    const isVideo = pendingOffer ? pendingOffer.isVideo : true;
+    const audioOnlyFlag = isVideo ? '' : '&webcam=0';
+    const zeroLoginUrl = `https://vdo.ninja/?room=${roomName}&push=${myPush}&view=${partnerView}&autostart=1&nobuttons=0&quality=0${audioOnlyFlag}`;
 
-      localVideo.srcObject = localStream;
-      localVideo.style.display = pendingOffer.isVideo ? 'block' : 'none';
-
-      peerConnection = new RTCPeerConnection(rtcConfig);
-
-      remoteStream = new MediaStream();
-      remoteVideo.srcObject = remoteStream;
-
-      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-      peerConnection.ontrack = (event) => {
-        if (event.streams && event.streams[0]) {
-          event.streams[0].getTracks().forEach(t => {
-            if (!remoteStream.getTracks().includes(t)) {
-              remoteStream.addTrack(t);
-            }
-          });
-        } else if (event.track) {
-          if (!remoteStream.getTracks().includes(event.track)) {
-            remoteStream.addTrack(event.track);
-          }
-        }
-        remoteVideo.play().catch(e => console.log('Autoplay error:', e));
-      };
-
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          push(getCandidatesRef(currentPasscode), event.candidate.toJSON());
-        }
-      };
-
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(pendingOffer.offer));
-
-      // Flush candidate queue once remote description is set
-      while (iceCandidatesQueue.length > 0) {
-        const cand = iceCandidatesQueue.shift();
-        try {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(cand));
-        } catch (e) {}
-      }
-
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-
-      set(getAnswerRef(), {
-        callerCode: currentPasscode,
-        answer: { type: answer.type, sdp: answer.sdp },
-        timestamp: Date.now()
-      });
-
-      // Listen for Partner Candidates via onChildAdded
-      const callerCandidatesRef = getCandidatesRef(pendingOffer.callerCode);
-      onChildAdded(callerCandidatesRef, async (snapshot) => {
-        const candidateData = snapshot.val();
-        if (candidateData) {
-          if (peerConnection && peerConnection.remoteDescription) {
-            try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(candidateData));
-            } catch (e) {}
-          } else {
-            iceCandidatesQueue.push(candidateData);
-          }
-        }
-      });
-      activeListeners.push(callerCandidatesRef);
-
-      isCallActive = true;
-      callModal.classList.add('active');
-      startCallTimer();
-    } catch (err) {
-      alert('Failed to accept call: ' + err.message);
-      declineCall();
+    if (callIframe) {
+      callIframe.src = zeroLoginUrl;
     }
+    callModal.classList.add('active');
+    isCallActive = true;
+    startCallTimer();
   };
 
   const declineCall = () => {
@@ -776,56 +613,14 @@ document.addEventListener('DOMContentLoaded', () => {
     stopRingtone();
     if (callTimerInterval) clearInterval(callTimerInterval);
     
-    if (localStream) {
-      localStream.getTracks().forEach(t => t.stop());
-      localStream = null;
+    if (callIframe) {
+      callIframe.src = '';
     }
-    if (peerConnection) {
-      peerConnection.close();
-      peerConnection = null;
-    }
-    if (activePeerCall) {
-      try { activePeerCall.close(); } catch(e) {}
-      activePeerCall = null;
-    }
-
-    const jitsiContainer = document.getElementById('jitsiContainer');
-    if (jitsiContainer) {
-      jitsiContainer.innerHTML = '';
-      jitsiContainer.style.display = 'none';
-    }
-
-    localVideo.srcObject = null;
-    remoteVideo.srcObject = null;
-    localVideo.style.display = 'block';
-    remoteVideo.style.display = 'block';
     isCallActive = false;
     pendingOffer = null;
-    iceCandidatesQueue = [];
     callModal.classList.remove('active');
     incomingCallModal.classList.remove('active');
   };
-
-  // Switch to Zero-Login Instant HD Video Pair Room
-  const switchHdRoomBtn = document.getElementById('switchHdRoomBtn');
-  if (switchHdRoomBtn) {
-    switchHdRoomBtn.addEventListener('click', () => {
-      const jitsiContainer = document.getElementById('jitsiContainer');
-      if (jitsiContainer) {
-        const roomName = `our-secret-space-mausikta-subhranil`;
-        const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
-        const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
-        const zeroLoginHdUrl = `https://vdo.ninja/?room=${roomName}&push=${myPush}&view=${partnerView}&autostart=1&nobuttons=0&quality=0`;
-        
-        jitsiContainer.innerHTML = `<iframe src="${zeroLoginHdUrl}" style="width:100%; height:100%; border:none; background:#000;" allow="camera; microphone; display-capture; autoplay; clipboard-write;"></iframe>`;
-        jitsiContainer.style.display = 'block';
-        remoteVideo.style.display = 'none';
-        localVideo.style.display = 'none';
-        callModal.classList.add('active');
-        startCallTimer();
-      }
-    });
-  }
 
   const endCall = () => {
     if (currentPasscode) {
