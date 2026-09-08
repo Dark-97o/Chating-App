@@ -1,7 +1,34 @@
-// Real-time Couple Chat Logic & Canvas Heart Physics
+// Firebase Realtime Database Integrated Couple Chat Logic
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { 
+  getDatabase, 
+  ref, 
+  push, 
+  onValue, 
+  set, 
+  onDisconnect, 
+  serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyA_Iu7VzVBsXeq63FCWQDFyNIc3pFk5O80",
+  authDomain: "chatting-247af.firebaseapp.com",
+  databaseURL: "https://chatting-247af-default-rtdb.firebaseio.com",
+  projectId: "chatting-247af",
+  storageBucket: "chatting-247af.firebasestorage.app",
+  messagingSenderId: "708580936424",
+  appId: "1:708580936424:web:e63c92380a22b4f1eed75d",
+  measurementId: "G-GCKD9QD7CS"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Global State & Elements
+  // UI Elements
   const chatMessages = document.getElementById('chatMessages');
   const messageInput = document.getElementById('messageInput');
   const sendBtn = document.getElementById('sendBtn');
@@ -9,46 +36,51 @@ document.addEventListener('DOMContentLoaded', () => {
   const photoInput = document.getElementById('photoInput');
   const photoUploadTrigger = document.getElementById('photoUploadTrigger');
   const typingIndicator = document.getElementById('typingIndicator');
-  const roleSwitcherBtn = document.getElementById('roleSwitcherBtn');
-  const currentRoleLabel = document.getElementById('currentRoleLabel');
+  
+  // Header & Status Elements
   const partnerName = document.getElementById('partnerName');
   const partnerAvatar = document.getElementById('partnerAvatar');
   const partnerStatusText = document.getElementById('partnerStatusText');
+  const statusDot = document.getElementById('statusDot');
+  const currentRoomCodeLabel = document.getElementById('currentRoomCodeLabel');
 
-  // Theme & Lock Elements
+  // Modals & Settings
   const themeModalBtn = document.getElementById('themeModalBtn');
   const themeModal = document.getElementById('themeModal');
   const closeThemeBtn = document.getElementById('closeThemeBtn');
   const lockAppBtn = document.getElementById('lockAppBtn');
   const lockModal = document.getElementById('lockModal');
+  const roomSettingsBtn = document.getElementById('roomSettingsBtn');
+  const roomBadgeBtn = document.getElementById('roomBadgeBtn');
+  const roomModal = document.getElementById('roomModal');
+  const roomCodeInput = document.getElementById('roomCodeInput');
+  const roleSelect = document.getElementById('roleSelect');
+  const saveRoomSettingsBtn = document.getElementById('saveRoomSettingsBtn');
   const pinDots = document.querySelectorAll('.pin-dot');
   const keypad = document.getElementById('keypad');
 
-  // App Configuration
+  // Application State
+  let currentRoomId = localStorage.getItem('couple_room_code') || 'our-secret-space';
   let currentRole = localStorage.getItem('couple_user_role') || 'Person A';
   let pinCode = '';
   const correctPin = '1234';
+  let isInitialLoadComplete = false;
 
-  // Avatars & Names for Roles
+  // Role Metadata
   const rolesData = {
     'Person A': {
-      name: 'Alex',
+      partnerRole: 'Person B',
       partnerName: 'Sam ♥',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-      status: 'Thinking of you ✨'
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
     },
     'Person B': {
-      name: 'Sam',
+      partnerRole: 'Person A',
       partnerName: 'Alex ♥',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-      status: 'Counting down the hours 💫'
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
     }
   };
 
-  // Setup Broadcast Channel for Real-time Cross-Tab Sync
-  const channel = new BroadcastChannel('couple_chat_channel');
-
-  // Audio Synthesizer (Web Audio API for zero-dependency cute sound FX)
+  // Audio Synthesizer (Web Audio API)
   const playSound = (type) => {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -73,21 +105,21 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.stop(ctx.currentTime + 0.2);
       } else if (type === 'nudge') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
-        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
-        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3); // C6
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3);
         gain.gain.setValueAtTime(0.2, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
         osc.start();
         osc.stop(ctx.currentTime + 0.5);
       }
     } catch (e) {
-      // Audio fallback silent
+      // Audio fallback
     }
   };
 
-  // Canvas Heart Burst System
+  // Canvas Heart Particle System
   const canvas = document.getElementById('heartCanvas');
   const ctx = canvas.getContext('2d');
   let particles = [];
@@ -149,29 +181,91 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   animateParticles();
 
-  // Load Messages from localStorage
-  const loadStoredMessages = () => {
-    const defaultMessages = [
-      { sender: 'Person B', text: 'Hey sweetheart! Did you see the sunset today? 🌅', time: '16:20', type: 'text' },
-      { sender: 'Person A', text: 'Yes! It reminded me of our first date ✨', time: '16:22', type: 'text' }
-    ];
+  // Firebase Realtime Database Connection & Listeners
+  let messagesRef, myPresenceRef, partnerPresenceRef, nudgeRef;
 
-    const stored = localStorage.getItem('couple_messages');
-    const messages = stored ? JSON.parse(stored) : defaultMessages;
-    renderMessages(messages);
-  };
+  const initFirebaseRoom = () => {
+    currentRoomCodeLabel.textContent = currentRoomId;
+    const partnerRole = rolesData[currentRole].partnerRole;
 
-  const saveMessage = (msg) => {
-    const stored = JSON.parse(localStorage.getItem('couple_messages') || '[]');
-    stored.push(msg);
-    localStorage.setItem('couple_messages', JSON.stringify(stored));
-    renderSingleMessage(msg);
+    // Update Header
+    partnerName.innerHTML = `${rolesData[currentRole].partnerName} <span class="couple-title-font">♥</span>`;
+    partnerAvatar.src = rolesData[currentRole].avatar;
+
+    // Firebase References
+    messagesRef = ref(db, `rooms/${currentRoomId}/messages`);
+    myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${currentRole}`);
+    partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerRole}`);
+    nudgeRef = ref(db, `rooms/${currentRoomId}/nudge`);
+
+    // Set My Presence & OnDisconnect Handler
+    set(myPresenceRef, {
+      online: true,
+      typing: false,
+      lastSeen: serverTimestamp()
+    });
+
+    const onDisconnectRef = onDisconnect(myPresenceRef);
+    onDisconnectRef.set({
+      online: false,
+      typing: false,
+      lastSeen: serverTimestamp()
+    });
+
+    // Listen to Partner's Online Presence & Typing Status
+    onValue(partnerPresenceRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.online) {
+        statusDot.classList.add('online');
+        statusDot.title = 'Online';
+        partnerStatusText.textContent = data.typing ? 'Typing...' : 'Online & Thinking of you ✨';
+
+        if (data.typing) {
+          typingIndicator.classList.add('active');
+        } else {
+          typingIndicator.classList.remove('active');
+        }
+      } else {
+        statusDot.classList.remove('online');
+        statusDot.title = 'Offline';
+        partnerStatusText.textContent = 'Offline';
+        typingIndicator.classList.remove('active');
+      }
+    });
+
+    // Listen for Realtime Messages
+    onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const msgList = Object.values(data);
+        renderMessages(msgList);
+
+        if (isInitialLoadComplete) {
+          const lastMsg = msgList[msgList.length - 1];
+          if (lastMsg && lastMsg.sender !== currentRole) {
+            playSound('receive');
+          }
+        }
+      } else {
+        renderMessages([]);
+      }
+      isInitialLoadComplete = true;
+    });
+
+    // Listen for Realtime Heart Nudges
+    onValue(nudgeRef, (snapshot) => {
+      const nudgeData = snapshot.val();
+      if (nudgeData && nudgeData.sender !== currentRole && (Date.now() - nudgeData.timestamp < 3000)) {
+        triggerHeartBurst(50);
+        playSound('nudge');
+      }
+    });
   };
 
   const renderMessages = (messages) => {
     chatMessages.innerHTML = `
       <div class="date-divider">
-        <span>Today • Secret Space</span>
+        <span>Firebase Realtime Connected • Secret Space</span>
       </div>
     `;
     messages.forEach(msg => renderSingleMessage(msg));
@@ -197,10 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
       contentHtml = `<div class="bubble" style="background: linear-gradient(135deg, #ff4b72, #ff7e5f); color: #fff;">💖 Sent a Heart Burst Nudge!</div>`;
     }
 
+    const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+
     row.innerHTML = `
       ${contentHtml}
       <div class="msg-meta">
-        <span>${msg.time}</span>
+        <span>${timeStr}</span>
         ${isMe ? '<span>✓✓</span>' : ''}
       </div>
     `;
@@ -214,45 +310,30 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const escapeHtml = (str) => {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   };
 
-  // Update UI for Active Role
-  const updateRoleUI = () => {
-    const info = rolesData[currentRole];
-    currentRoleLabel.textContent = currentRole;
-    partnerName.innerHTML = `${info.partnerName} <span class="couple-title-font">♥</span>`;
-    partnerAvatar.src = info.avatar;
-    partnerStatusText.textContent = info.status;
-    loadStoredMessages();
-  };
-
-  // Event Handlers
-  roleSwitcherBtn.addEventListener('click', () => {
-    currentRole = currentRole === 'Person A' ? 'Person B' : 'Person A';
-    localStorage.setItem('couple_user_role', currentRole);
-    updateRoleUI();
-  });
-
-  // Send Message Logic
+  // Send Text Message to Firebase
   const handleSendMessage = () => {
     const text = messageInput.value.trim();
     if (!text) return;
 
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const msgData = {
+    push(messagesRef, {
       sender: currentRole,
       text: text,
-      time: time,
+      timestamp: Date.now(),
       type: 'text'
-    };
+    });
 
-    saveMessage(msgData);
     playSound('send');
     messageInput.value = '';
 
-    // Broadcast message to partner window
-    channel.postMessage({ type: 'NEW_MESSAGE', data: msgData });
+    // Reset typing status
+    set(myPresenceRef, {
+      online: true,
+      typing: false,
+      lastSeen: serverTimestamp()
+    });
   };
 
   sendBtn.addEventListener('click', handleSendMessage);
@@ -260,86 +341,94 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') handleSendMessage();
   });
 
-  // Typing Indicator Broadcast
+  // Typing Status Broadcast to Firebase
   let typingTimeout;
   messageInput.addEventListener('input', () => {
-    channel.postMessage({ type: 'TYPING', sender: currentRole, isTyping: true });
+    set(myPresenceRef, {
+      online: true,
+      typing: true,
+      lastSeen: serverTimestamp()
+    });
+
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
-      channel.postMessage({ type: 'TYPING', sender: currentRole, isTyping: false });
+      set(myPresenceRef, {
+        online: true,
+        typing: false,
+        lastSeen: serverTimestamp()
+      });
     }, 1500);
   });
 
-  // Nudge Heart Button
+  // Heart Nudge Trigger to Firebase
   nudgeHeartBtn.addEventListener('click', () => {
     triggerHeartBurst(45);
     playSound('nudge');
 
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const msgData = {
+    set(nudgeRef, {
       sender: currentRole,
-      time: time,
-      type: 'nudge'
-    };
+      timestamp: Date.now()
+    });
 
-    saveMessage(msgData);
-    channel.postMessage({ type: 'NUDGE', sender: currentRole, data: msgData });
+    push(messagesRef, {
+      sender: currentRole,
+      timestamp: Date.now(),
+      type: 'nudge'
+    });
   });
 
-  // Photo Polaroid Upload
+  // Photo Polaroid Upload to Firebase
   photoUploadTrigger.addEventListener('click', () => photoInput.click());
   photoInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const caption = prompt('Add a romantic polaroid caption:', 'Making memories together ♥');
-        const msgData = {
+        push(messagesRef, {
           sender: currentRole,
           imgUrl: event.target.result,
           caption: caption || '',
-          time: time,
+          timestamp: Date.now(),
           type: 'polaroid'
-        };
-        saveMessage(msgData);
+        });
         playSound('send');
-        channel.postMessage({ type: 'NEW_MESSAGE', data: msgData });
       };
       reader.readAsDataURL(file);
     }
   });
 
-  // Quick Sticker Buttons
+  // Emoji Stickers
   document.querySelectorAll('.sticker-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const emoji = btn.dataset.emoji;
-      messageInput.value += ` ${emoji} `;
+      messageInput.value += ` ${btn.dataset.emoji} `;
       messageInput.focus();
     });
   });
 
-  // Broadcast Channel Message Listener
-  channel.onmessage = (event) => {
-    const { type, sender, data, isTyping } = event.data;
-
-    if (sender !== currentRole) {
-      if (type === 'NEW_MESSAGE') {
-        saveMessage(data);
-        playSound('receive');
-      } else if (type === 'NUDGE') {
-        triggerHeartBurst(50);
-        playSound('nudge');
-        saveMessage(data);
-      } else if (type === 'TYPING') {
-        if (isTyping) {
-          typingIndicator.classList.add('active');
-        } else {
-          typingIndicator.classList.remove('active');
-        }
-      }
-    }
+  // Room & Role Settings Modal
+  const openRoomModal = () => {
+    roomCodeInput.value = currentRoomId;
+    roleSelect.value = currentRole;
+    roomModal.classList.add('active');
   };
+
+  roomSettingsBtn.addEventListener('click', openRoomModal);
+  roomBadgeBtn.addEventListener('click', openRoomModal);
+
+  saveRoomSettingsBtn.addEventListener('click', () => {
+    const newRoom = roomCodeInput.value.trim().toLowerCase() || 'our-secret-space';
+    const newRole = roleSelect.value;
+
+    currentRoomId = newRoom;
+    currentRole = newRole;
+
+    localStorage.setItem('couple_room_code', currentRoomId);
+    localStorage.setItem('couple_user_role', currentRole);
+
+    roomModal.classList.remove('active');
+    initFirebaseRoom();
+  });
 
   // Theme Switching
   themeModalBtn.addEventListener('click', () => themeModal.classList.add('active'));
@@ -359,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
 
-  // PIN Lock Functionality
+  // PIN Lock Screen Logic
   lockAppBtn.addEventListener('click', () => lockModal.classList.add('active'));
 
   keypad.addEventListener('click', (e) => {
@@ -393,6 +482,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Initial Load
-  updateRoleUI();
+  // Initialize Room & Firebase Connection
+  initFirebaseRoom();
 });

@@ -147,10 +147,15 @@ body {
   right: 0;
   width: 12px;
   height: 12px;
-  background: #10b981;
+  background: #6b7280;
   border: 2px solid #120917;
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  transition: all 0.3s ease;
+}
+
+.status-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
 }
 
 .partner-details h2 {
@@ -222,14 +227,21 @@ body {
   font-weight: 500;
 }
 
-.role-switcher {
+.room-badge {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
-  padding: 2px 10px;
+  padding: 3px 10px;
   font-size: 0.72rem;
   color: var(--text-main);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.room-badge:hover {
+  border-color: var(--accent-rose);
 }
 
 /* Messages Area */
@@ -340,7 +352,7 @@ body {
   font-size: 0.85rem;
 }
 
-/* Message Meta & Reactions */
+/* Message Meta */
 .msg-meta {
   font-size: 0.68rem;
   color: rgba(255, 255, 255, 0.6);
@@ -352,20 +364,6 @@ body {
 
 .message-row.me .msg-meta {
   justify-content: flex-end;
-}
-
-.reaction-tag {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 1px 6px;
-  font-size: 0.75rem;
-  margin-top: -6px;
-  align-self: flex-start;
-  border: 1px solid var(--glass-border);
-}
-
-.message-row.me .reaction-tag {
-  align-self: flex-end;
 }
 
 /* Typing Indicator */
@@ -382,6 +380,8 @@ body {
   transform: translateY(10px);
   transition: all 0.3s ease;
   pointer-events: none;
+  margin-left: 16px;
+  margin-bottom: 8px;
 }
 
 .typing-indicator.active {
@@ -577,6 +577,23 @@ body {
   margin-bottom: 20px;
 }
 
+.modal-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  outline: none;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.modal-input:focus {
+  border-color: var(--accent-rose);
+}
+
 .theme-options {
   display: flex;
   flex-direction: column;
@@ -600,6 +617,25 @@ body {
 .theme-btn:hover {
   border-color: var(--accent-rose);
   background: rgba(255, 255, 255, 0.1);
+}
+
+.action-btn-primary {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--msg-me-bg);
+  border: none;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px var(--accent-rose-glow);
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.action-btn-primary:hover {
+  transform: scale(1.02);
 }
 
 /* Pin Lock View */
