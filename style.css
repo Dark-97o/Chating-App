@@ -632,23 +632,24 @@ body {
 /* Typing Indicator */
 .typing-indicator {
   align-self: flex-start;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 4px;
   background: rgba(18, 9, 24, 0.75);
   backdrop-filter: blur(10px);
-  padding: 10px 16px;
+  padding: 8px 14px;
   border-radius: 20px;
   border: 1px solid var(--glass-border);
   opacity: 0;
-  transform: translateY(10px);
-  transition: all 0.25s ease;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
   pointer-events: none;
-  margin-left: 16px;
-  margin-bottom: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .typing-indicator.active {
+  display: flex;
   opacity: 1;
   transform: translateY(0);
 }
