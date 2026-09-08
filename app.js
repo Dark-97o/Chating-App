@@ -142,7 +142,22 @@ document.addEventListener('DOMContentLoaded', () => {
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
       { urls: 'stun:global.stun.twilio.com:3478' },
-      { urls: 'stun:stun.services.mozilla.com' }
+      { urls: 'stun:stun.services.mozilla.com' },
+      {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
     ]
   };
 
@@ -530,24 +545,41 @@ document.addEventListener('DOMContentLoaded', () => {
       iceCandidatesQueue = [];
       set(ref(db, `rooms/${currentRoomId}/callSignal`), null);
 
-      localStream = await navigator.mediaDevices.getUserMedia({
-        video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false,
-        audio: true
-      });
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: isVideo ? { facingMode: "user" } : false,
+          audio: true
+        });
+      } catch (e1) {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: isVideo,
+          audio: true
+        });
+      }
 
       localVideo.srcObject = localStream;
       localVideo.style.display = isVideo ? 'block' : 'none';
 
       peerConnection = new RTCPeerConnection(rtcConfig);
 
+      remoteStream = new MediaStream();
+      remoteVideo.srcObject = remoteStream;
+
       localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
       peerConnection.ontrack = (event) => {
         if (event.streams && event.streams[0]) {
-          remoteStream = event.streams[0];
-          remoteVideo.srcObject = remoteStream;
-          remoteVideo.play().catch(e => console.log('Autoplay error:', e));
+          event.streams[0].getTracks().forEach(t => {
+            if (!remoteStream.getTracks().includes(t)) {
+              remoteStream.addTrack(t);
+            }
+          });
+        } else if (event.track) {
+          if (!remoteStream.getTracks().includes(event.track)) {
+            remoteStream.addTrack(event.track);
+          }
         }
+        remoteVideo.play().catch(e => console.log('Autoplay error:', e));
       };
 
       peerConnection.onicecandidate = (event) => {
@@ -622,24 +654,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       iceCandidatesQueue = [];
-      localStream = await navigator.mediaDevices.getUserMedia({
-        video: pendingOffer.isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false,
-        audio: true
-      });
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: pendingOffer.isVideo ? { facingMode: "user" } : false,
+          audio: true
+        });
+      } catch (e1) {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: pendingOffer.isVideo,
+          audio: true
+        });
+      }
 
       localVideo.srcObject = localStream;
       localVideo.style.display = pendingOffer.isVideo ? 'block' : 'none';
 
       peerConnection = new RTCPeerConnection(rtcConfig);
 
+      remoteStream = new MediaStream();
+      remoteVideo.srcObject = remoteStream;
+
       localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
       peerConnection.ontrack = (event) => {
         if (event.streams && event.streams[0]) {
-          remoteStream = event.streams[0];
-          remoteVideo.srcObject = remoteStream;
-          remoteVideo.play().catch(e => console.log('Autoplay error:', e));
+          event.streams[0].getTracks().forEach(t => {
+            if (!remoteStream.getTracks().includes(t)) {
+              remoteStream.addTrack(t);
+            }
+          });
+        } else if (event.track) {
+          if (!remoteStream.getTracks().includes(event.track)) {
+            remoteStream.addTrack(event.track);
+          }
         }
+        remoteVideo.play().catch(e => console.log('Autoplay error:', e));
       };
 
       peerConnection.onicecandidate = (event) => {
