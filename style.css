@@ -539,19 +539,25 @@ body {
   color: var(--text-muted);
 }
 
-/* Messages Area with Wallpaper Background */
-.chat-messages {
+/* Messages Area Wrapper — iOS Safari needs a relative container with known height */
+.chat-messages-wrapper {
   flex: 1 1 0px;
   min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Messages Area — absolutely positioned inside wrapper for iOS WebKit scroll isolation */
+.chat-messages {
+  position: absolute;
+  inset: 0;
   padding: 20px 16px;
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
   overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  scroll-behavior: smooth;
   background: var(--wallpaper-overlay), url('assets/wallpaper.jpg') center/cover no-repeat;
 }
 
@@ -567,8 +573,8 @@ body {
 /* Floating Scroll Down Button */
 .scroll-down-btn {
   position: absolute;
-  bottom: 120px;
-  right: 20px;
+  bottom: 16px;
+  right: 16px;
   width: 42px;
   height: 42px;
   border-radius: 50%;
