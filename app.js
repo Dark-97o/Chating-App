@@ -806,20 +806,23 @@ document.addEventListener('DOMContentLoaded', () => {
     incomingCallModal.classList.remove('active');
   };
 
-  // Switch to HD Encrypted Room Fallback
+  // Switch to Zero-Login Instant HD Video Pair Room
   const switchHdRoomBtn = document.getElementById('switchHdRoomBtn');
   if (switchHdRoomBtn) {
     switchHdRoomBtn.addEventListener('click', () => {
       const jitsiContainer = document.getElementById('jitsiContainer');
       if (jitsiContainer) {
-        const roomName = `our-secret-space-mausikta-subhranil-2023`;
-        const jitsiUrl = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false`;
+        const roomName = `our-secret-space-mausikta-subhranil`;
+        const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
+        const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
+        const zeroLoginHdUrl = `https://vdo.ninja/?room=${roomName}&push=${myPush}&view=${partnerView}&autostart=1&nobuttons=0&quality=0`;
         
-        jitsiContainer.innerHTML = `<iframe src="${jitsiUrl}" style="width:100%; height:100%; border:none;" allow="camera; microphone; display-capture; autoplay; clipboard-write;"></iframe>`;
+        jitsiContainer.innerHTML = `<iframe src="${zeroLoginHdUrl}" style="width:100%; height:100%; border:none; background:#000;" allow="camera; microphone; display-capture; autoplay; clipboard-write;"></iframe>`;
         jitsiContainer.style.display = 'block';
         remoteVideo.style.display = 'none';
         localVideo.style.display = 'none';
         callModal.classList.add('active');
+        startCallTimer();
       }
     });
   }
