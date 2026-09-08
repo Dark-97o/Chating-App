@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two of Us | Couple Secret Space</title>
+  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time sync and romantic couple vibes.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Floating Heart Animation Canvas -->
+  <canvas id="heartCanvas"></canvas>
+
+  <div class="app-viewport">
+    
+    <!-- Top Header -->
+    <header class="chat-header">
+      <div class="partner-info">
+        <div class="avatar-wrapper">
+          <img id="partnerAvatar" class="avatar-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Partner Avatar">
+          <span class="status-dot" id="statusDot"></span>
+        </div>
+        <div class="partner-details">
+          <h2 id="partnerName">My Favorite Person <span class="couple-title-font">♥</span></h2>
+          <span class="partner-status" id="partnerStatusText">Thinking of you ✨</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="themeModalBtn" title="Switch Theme">🎨</button>
+        <button class="icon-btn" id="lockAppBtn" title="Lock Space">🔒</button>
+      </div>
+    </header>
+
+    <!-- Togetherness Banner -->
+    <div class="togetherness-bar">
+      <div class="days-counter">
+        <span>💖</span>
+        <span id="togetherDaysText">Day 124 Together</span>
+      </div>
+      <button class="role-switcher" id="roleSwitcherBtn">Switching View: <strong id="currentRoleLabel">Person A</strong></button>
+    </div>
+
+    <!-- Messages Container -->
+    <main class="chat-messages" id="chatMessages">
+      <div class="date-divider">
+        <span>Today • Secret Space</span>
+      </div>
+      <!-- Messages rendered dynamically -->
+    </main>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" id="typingIndicator">
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 6px;">Partner is typing...</span>
+    </div>
+
+    <!-- Quick Reaction Bar -->
+    <div class="quick-stickers-bar">
+      <button class="sticker-btn" data-emoji="❤️">❤️</button>
+      <button class="sticker-btn" data-emoji="💖">💖</button>
+      <button class="sticker-btn" data-emoji="🌹">🌹</button>
+      <button class="sticker-btn" data-emoji="✨">✨</button>
+      <button class="sticker-btn" data-emoji="💋">💋</button>
+      <button class="sticker-btn" data-emoji="🥂">🥂</button>
+      <button class="sticker-btn" data-emoji="🧸">🧸</button>
+    </div>
+
+    <!-- Chat Input Area -->
+    <footer class="chat-input-area">
+      <button class="heart-nudge-btn" id="nudgeHeartBtn" title="Send Heart Nudge">
+        ❤️
+      </button>
+
+      <div class="input-box-wrapper">
+        <input type="text" id="messageInput" class="chat-input" placeholder="Write something sweet..." autocomplete="off">
+        <button class="input-icon-btn" id="photoUploadTrigger" title="Send Polaroid Photo">📷</button>
+        <input type="file" id="photoInput" accept="image/*" style="display: none;">
+      </div>
+
+      <button class="send-btn" id="sendBtn" title="Send Message">
+        ➔
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- Theme Selector Modal -->
+  <div class="modal-overlay" id="themeModal">
+    <div class="modal-card">
+      <h3 class="couple-title-font">Select Aesthetic</h3>
+      <p>Choose your couple vibes theme</p>
+      <div class="theme-options">
+        <button class="theme-btn" data-set-theme="rose-gold">
+          <span>🌹 Rose Gold & Velvet</span>
+          <span>✨</span>
+        </button>
+        <button class="theme-btn" data-set-theme="cyber-neon">
+          <span>🌌 Midnight Cyber-Romance</span>
+          <span>✨</span>
+        </button>
+        <button class="theme-btn" data-set-theme="sunset-glow">
+          <span>🌅 Sunset Glow</span>
+          <span>✨</span>
+        </button>
+      </div>
+      <button class="role-switcher" style="margin-top: 18px; padding: 8px 18px;" id="closeThemeBtn">Done</button>
+    </div>
+  </div>
+
+  <!-- PIN Lock Screen Overlay -->
+  <div class="modal-overlay" id="lockModal">
+    <div class="modal-card">
+      <span style="font-size: 2.2rem;">🔒</span>
+      <h3 class="couple-title-font" style="margin-top: 8px;">Secret Space Locked</h3>
+      <p>Enter 4-digit secret PIN (Default: 1234)</p>
+      
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <div class="keypad" id="keypad">
+        <button class="key-btn" data-key="1">1</button>
+        <button class="key-btn" data-key="2">2</button>
+        <button class="key-btn" data-key="3">3</button>
+        <button class="key-btn" data-key="4">4</button>
+        <button class="key-btn" data-key="5">5</button>
+        <button class="key-btn" data-key="6">6</button>
+        <button class="key-btn" data-key="7">7</button>
+        <button class="key-btn" data-key="8">8</button>
+        <button class="key-btn" data-key="9">9</button>
+        <button class="key-btn" data-key="C">C</button>
+        <button class="key-btn" data-key="0">0</button>
+        <button class="key-btn" data-key="✓">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
