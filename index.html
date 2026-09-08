@@ -33,7 +33,7 @@
 
       <div class="header-actions">
         <button class="icon-btn" id="milestonesBtn" title="Special Dates & Birthdays">🎂</button>
-        <button class="icon-btn" id="joinModalTriggerBtn" title="Switch User / Room">👤</button>
+        <button class="icon-btn" id="joinModalTriggerBtn" title="Switch User">👤</button>
         <button class="icon-btn" id="themeModalBtn" title="Switch Theme">🎨</button>
         <button class="icon-btn" id="lockAppBtn" title="Lock Space">🔒</button>
       </div>
@@ -45,9 +45,6 @@
         <img id="myAvatarThumb" class="thumb-avatar" src="assets/mausikta.jpg" alt="My Avatar">
         <span id="togetherDaysText">💖 Day 1079 Together</span>
       </div>
-      <button class="room-badge" id="roomBadgeBtn">
-        <span>🔑 Room:</span> <strong id="currentRoomCodeLabel">our-secret-space</strong>
-      </button>
     </div>
 
     <!-- Messages Container -->
@@ -165,7 +162,7 @@
   <div class="modal-overlay" id="joinModal">
     <div class="modal-card">
       <h3 class="couple-title-font" style="font-size: 1.5rem;">Join Secret Space</h3>
-      <p>Enter your personal code to enter the room</p>
+      <p>Select your profile or enter your code</p>
       
       <div style="display: flex; justify-content: center; gap: 16px; margin: 16px 0 20px 0;">
         <div class="anime-preview-card" id="mauPreview">
@@ -178,14 +175,9 @@
         </div>
       </div>
 
-      <div style="text-align: left; margin-bottom: 12px;">
-        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Personal Passcode:</label>
-        <input type="text" id="passcodeInput" class="modal-input" placeholder="Enter 'MAU' or 'SUB'" style="text-transform: uppercase; font-weight: 600; letter-spacing: 2px;">
-      </div>
-
       <div style="text-align: left; margin-bottom: 16px;">
-        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Secret Room Code:</label>
-        <input type="text" id="roomCodeInput" class="modal-input" placeholder="e.g. our-secret-space" value="our-secret-space">
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Personal Code:</label>
+        <input type="text" id="passcodeInput" class="modal-input" placeholder="Enter 'MAU' or 'SUB'" style="text-transform: uppercase; font-weight: 600; letter-spacing: 2px;">
       </div>
 
       <button class="action-btn-primary" id="joinSpaceBtn">Enter Secret Space 💖</button>

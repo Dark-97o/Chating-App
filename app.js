@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const partnerAvatar = document.getElementById('partnerAvatar');
   const partnerStatusText = document.getElementById('partnerStatusText');
   const statusDot = document.getElementById('statusDot');
-  const currentRoomCodeLabel = document.getElementById('currentRoomCodeLabel');
   const myAvatarThumb = document.getElementById('myAvatarThumb');
   const myNameLabel = document.getElementById('myNameLabel');
   const togetherDaysText = document.getElementById('togetherDaysText');
@@ -61,10 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const lockAppBtn = document.getElementById('lockAppBtn');
   const lockModal = document.getElementById('lockModal');
   const joinModalTriggerBtn = document.getElementById('joinModalTriggerBtn');
-  const roomBadgeBtn = document.getElementById('roomBadgeBtn');
   const joinModal = document.getElementById('joinModal');
   const passcodeInput = document.getElementById('passcodeInput');
-  const roomCodeInput = document.getElementById('roomCodeInput');
   const joinSpaceBtn = document.getElementById('joinSpaceBtn');
   const mauPreview = document.getElementById('mauPreview');
   const subPreview = document.getElementById('subPreview');
@@ -103,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // State
   let currentPasscode = localStorage.getItem('couple_user_code') || '';
-  let currentRoomId = localStorage.getItem('couple_room_code') || 'our-secret-space';
+  const currentRoomId = 'our-secret-space'; // Default secret room
   let pinCode = '';
   const correctPin = '1234';
   let isInitialLoadComplete = false;
@@ -113,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
     
     // Anniversary: September 25, 2023
-    const startDate = new Date(2023, 8, 25); // Month 8 is September (0-indexed)
+    const startDate = new Date(2023, 8, 25);
     const diffTime = Math.abs(now - startDate);
     const totalDaysTogether = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -328,7 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const myProfile = profiles[currentPasscode];
     const partnerProfile = profiles[myProfile.partnerCode];
 
-    currentRoomCodeLabel.textContent = currentRoomId;
     myNameLabel.textContent = myProfile.name;
     myAvatarThumb.src = myProfile.avatar;
 
@@ -589,7 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   joinSpaceBtn.addEventListener('click', () => {
     const typedCode = passcodeInput.value.trim().toUpperCase();
-    const typedRoom = roomCodeInput.value.trim().toLowerCase() || 'our-secret-space';
 
     if (typedCode !== 'MAU' && typedCode !== 'SUB') {
       alert('Invalid passcode! Please enter "MAU" for Mausikta or "SUB" for Subhranil.');
@@ -597,10 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     currentPasscode = typedCode;
-    currentRoomId = typedRoom;
-
     localStorage.setItem('couple_user_code', currentPasscode);
-    localStorage.setItem('couple_room_code', currentRoomId);
 
     joinModal.classList.remove('active');
     initFirebaseRoom();
@@ -608,13 +600,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   joinModalTriggerBtn.addEventListener('click', () => {
     passcodeInput.value = currentPasscode;
-    roomCodeInput.value = currentRoomId;
-    joinModal.classList.add('active');
-  });
-
-  roomBadgeBtn.addEventListener('click', () => {
-    passcodeInput.value = currentPasscode;
-    roomCodeInput.value = currentRoomId;
     joinModal.classList.add('active');
   });
 
