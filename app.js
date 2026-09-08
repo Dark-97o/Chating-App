@@ -1,4 +1,4 @@
-// Firebase Realtime Database Integrated Couple Chat Logic for Mausikta & Subhranil
+// Firebase Realtime Database Integrated Couple Chat Logic with WebRTC 1-on-1 Video & Voice Calling
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { 
   getDatabase, 
@@ -53,6 +53,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const myNameLabel = document.getElementById('myNameLabel');
   const togetherDaysText = document.getElementById('togetherDaysText');
 
+  // WebRTC Call Elements
+  const videoCallBtn = document.getElementById('videoCallBtn');
+  const audioCallBtn = document.getElementById('audioCallBtn');
+  const callModal = document.getElementById('callModal');
+  const remoteVideo = document.getElementById('remoteVideo');
+  const localVideo = document.getElementById('localVideo');
+  const callPartnerAvatar = document.getElementById('callPartnerAvatar');
+  const callPartnerName = document.getElementById('callPartnerName');
+  const callDurationLabel = document.getElementById('callDurationLabel');
+  const toggleMicBtn = document.getElementById('toggleMicBtn');
+  const toggleCamBtn = document.getElementById('toggleCamBtn');
+  const endCallBtn = document.getElementById('endCallBtn');
+
+  // Incoming Call Elements
+  const incomingCallModal = document.getElementById('incomingCallModal');
+  const incomingCallerAvatar = document.getElementById('incomingCallerAvatar');
+  const incomingCallerName = document.getElementById('incomingCallerName');
+  const incomingCallTypeText = document.getElementById('incomingCallTypeText');
+  const acceptCallBtn = document.getElementById('acceptCallBtn');
+  const declineCallBtn = document.getElementById('declineCallBtn');
+
   // Modals & Settings
   const themeModalBtn = document.getElementById('themeModalBtn');
   const themeModal = document.getElementById('themeModal');
@@ -98,23 +119,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // State
+  // Application State
   let currentPasscode = localStorage.getItem('couple_user_code') || '';
-  const currentRoomId = 'our-secret-space'; // Default secret room
+  const currentRoomId = 'our-secret-space';
   let pinCode = '';
   const correctPin = '1234';
   let isInitialLoadComplete = false;
 
+  // WebRTC State
+  let peerConnection = null;
+  let localStream = null;
+  let remoteStream = null;
+  let pendingOffer = null;
+  let isCallActive = false;
+  let callTimerInterval = null;
+  let ringtoneInterval = null;
+
+  const rtcConfig = {
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  };
+
   // Calculate Days Together & Birthday Countdowns
   const updateMilestones = () => {
     const now = new Date();
-    
-    // Anniversary: September 25, 2023
     const startDate = new Date(2023, 8, 25);
     const diffTime = Math.abs(now - startDate);
     const totalDaysTogether = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    // Calculate Years, Months, Days breakdown
     let years = now.getFullYear() - startDate.getFullYear();
     let months = now.getMonth() - startDate.getMonth();
     let days = now.getDate() - startDate.getDate();
@@ -135,13 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modalDaysTogether.textContent = `${totalDaysTogether.toLocaleString()} Days`;
     modalYearsMonths.textContent = breakdownText;
 
-    // Subhranil Birthday: May 24, 2004
-    const subBdayText = calculateBirthdayCountdown(new Date(2004, 4, 24), 'Subhranil');
-    subBirthdayCountdown.textContent = subBdayText;
-
-    // Mausikta Birthday: November 8, 2005
-    const mauBdayText = calculateBirthdayCountdown(new Date(2005, 10, 8), 'Mausikta');
-    mauBirthdayCountdown.textContent = mauBdayText;
+    subBirthdayCountdown.textContent = calculateBirthdayCountdown(new Date(2004, 4, 24), 'Subhranil');
+    mauBirthdayCountdown.textContent = calculateBirthdayCountdown(new Date(2005, 10, 8), 'Mausikta');
   };
 
   const calculateBirthdayCountdown = (birthDate, name) => {
@@ -206,9 +232,29 @@ document.addEventListener('DOMContentLoaded', () => {
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
         osc.start();
         osc.stop(ctx.currentTime + 0.3);
+      } else if (type === 'ringtone') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.setValueAtTime(480, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
       }
     } catch (e) {
       // Audio fallback
+    }
+  };
+
+  const startRingtone = () => {
+    stopRingtone();
+    ringtoneInterval = setInterval(() => playSound('ringtone'), 1200);
+  };
+
+  const stopRingtone = () => {
+    if (ringtoneInterval) {
+      clearInterval(ringtoneInterval);
+      ringtoneInterval = null;
     }
   };
 
@@ -313,8 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Firebase Realtime Connection
-  let messagesRef, myPresenceRef, partnerPresenceRef, animRef;
+  // Firebase Realtime Connection & WebRTC Signaling
+  let messagesRef, myPresenceRef, partnerPresenceRef, animRef, callSignalRef;
 
   const initFirebaseRoom = () => {
     if (!profiles[currentPasscode]) {
@@ -330,12 +376,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     partnerName.innerHTML = `${partnerProfile.name} <span class="couple-title-font">♥</span>`;
     partnerAvatar.src = partnerProfile.avatar;
+    callPartnerAvatar.src = partnerProfile.avatar;
+    callPartnerName.textContent = partnerProfile.name;
+    incomingCallerAvatar.src = partnerProfile.avatar;
+    incomingCallerName.textContent = partnerProfile.name;
     typingTextLabel.textContent = `${partnerProfile.name} is typing...`;
 
     messagesRef = ref(db, `rooms/${currentRoomId}/messages`);
     myPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${myProfile.name}`);
     partnerPresenceRef = ref(db, `rooms/${currentRoomId}/presence/${partnerProfile.name}`);
     animRef = ref(db, `rooms/${currentRoomId}/anim`);
+    callSignalRef = ref(db, `rooms/${currentRoomId}/callSignal`);
 
     set(myPresenceRef, {
       online: true,
@@ -349,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lastSeen: serverTimestamp()
     });
 
-    // Listen to Partner Online Status & Typing
+    // Listen to Partner Online Status
     onValue(partnerPresenceRef, (snapshot) => {
       const data = snapshot.val();
       if (data && data.online) {
@@ -401,7 +452,216 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
+
+    // WebRTC Realtime Firebase Signaling Listener
+    onValue(callSignalRef, async (snapshot) => {
+      const signal = snapshot.val();
+      if (!signal || signal.callerCode === currentPasscode) return;
+
+      if (signal.type === 'OFFER' && (Date.now() - signal.timestamp < 30000)) {
+        pendingOffer = signal;
+        incomingCallTypeText.textContent = signal.isVideo ? 'Incoming Video Call...' : 'Incoming Voice Call...';
+        incomingCallModal.classList.add('active');
+        startRingtone();
+      } else if (signal.type === 'ANSWER' && peerConnection && isCallActive) {
+        if (peerConnection.signalingState !== 'stable') {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.answer));
+        }
+      } else if (signal.type === 'ICE_CANDIDATE' && peerConnection && signal.candidate) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        } catch (e) {}
+      } else if (signal.type === 'END') {
+        cleanUpCall();
+      }
+    });
   };
+
+  // WebRTC Call Core Logic
+  const startCall = async (isVideo = true) => {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        video: isVideo,
+        audio: true
+      });
+
+      localVideo.srcObject = localStream;
+      localVideo.style.display = isVideo ? 'block' : 'none';
+
+      peerConnection = new RTCPeerConnection(rtcConfig);
+
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+      peerConnection.ontrack = (event) => {
+        remoteStream = event.streams[0];
+        remoteVideo.srcObject = remoteStream;
+      };
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          set(callSignalRef, {
+            type: 'ICE_CANDIDATE',
+            callerCode: currentPasscode,
+            candidate: event.candidate.toJSON(),
+            timestamp: Date.now()
+          });
+        }
+      };
+
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+
+      set(callSignalRef, {
+        type: 'OFFER',
+        callerCode: currentPasscode,
+        isVideo: isVideo,
+        offer: { type: offer.type, sdp: offer.sdp },
+        timestamp: Date.now()
+      });
+
+      isCallActive = true;
+      callModal.classList.add('active');
+      startCallTimer();
+    } catch (err) {
+      alert('Camera & Microphone access is required for calls: ' + err.message);
+    }
+  };
+
+  const acceptCall = async () => {
+    if (!pendingOffer) return;
+    stopRingtone();
+    incomingCallModal.classList.remove('active');
+
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        video: pendingOffer.isVideo,
+        audio: true
+      });
+
+      localVideo.srcObject = localStream;
+      localVideo.style.display = pendingOffer.isVideo ? 'block' : 'none';
+
+      peerConnection = new RTCPeerConnection(rtcConfig);
+
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+      peerConnection.ontrack = (event) => {
+        remoteStream = event.streams[0];
+        remoteVideo.srcObject = remoteStream;
+      };
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          set(callSignalRef, {
+            type: 'ICE_CANDIDATE',
+            callerCode: currentPasscode,
+            candidate: event.candidate.toJSON(),
+            timestamp: Date.now()
+          });
+        }
+      };
+
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(pendingOffer.offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+
+      set(callSignalRef, {
+        type: 'ANSWER',
+        callerCode: currentPasscode,
+        answer: { type: answer.type, sdp: answer.sdp },
+        timestamp: Date.now()
+      });
+
+      isCallActive = true;
+      callModal.classList.add('active');
+      startCallTimer();
+    } catch (err) {
+      alert('Failed to accept call: ' + err.message);
+      declineCall();
+    }
+  };
+
+  const declineCall = () => {
+    stopRingtone();
+    incomingCallModal.classList.remove('active');
+    set(callSignalRef, {
+      type: 'END',
+      callerCode: currentPasscode,
+      timestamp: Date.now()
+    });
+    cleanUpCall();
+  };
+
+  const cleanUpCall = () => {
+    stopRingtone();
+    if (callTimerInterval) clearInterval(callTimerInterval);
+    
+    if (localStream) {
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+    }
+    if (peerConnection) {
+      peerConnection.close();
+      peerConnection = null;
+    }
+
+    localVideo.srcObject = null;
+    remoteVideo.srcObject = null;
+    isCallActive = false;
+    pendingOffer = null;
+    callModal.classList.remove('active');
+    incomingCallModal.classList.remove('active');
+  };
+
+  const endCall = () => {
+    set(callSignalRef, {
+      type: 'END',
+      callerCode: currentPasscode,
+      timestamp: Date.now()
+    });
+    cleanUpCall();
+  };
+
+  const startCallTimer = () => {
+    let seconds = 0;
+    if (callTimerInterval) clearInterval(callTimerInterval);
+    callTimerInterval = setInterval(() => {
+      seconds++;
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      callDurationLabel.textContent = `Connected ${m}:${s}`;
+    }, 1000);
+  };
+
+  // Call Event Handlers
+  videoCallBtn.addEventListener('click', () => startCall(true));
+  audioCallBtn.addEventListener('click', () => startCall(false));
+  acceptCallBtn.addEventListener('click', acceptCall);
+  declineCallBtn.addEventListener('click', declineCall);
+  endCallBtn.addEventListener('click', endCall);
+
+  toggleMicBtn.addEventListener('click', () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        toggleMicBtn.classList.toggle('off', !audioTrack.enabled);
+        toggleMicBtn.textContent = audioTrack.enabled ? '🎤' : '🎙️';
+      }
+    }
+  });
+
+  toggleCamBtn.addEventListener('click', () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        toggleCamBtn.classList.toggle('off', !videoTrack.enabled);
+        toggleCamBtn.textContent = videoTrack.enabled ? '📹' : '🚫';
+        localVideo.style.display = videoTrack.enabled ? 'block' : 'none';
+      }
+    }
+  });
 
   const renderMessages = (messages) => {
     chatMessages.innerHTML = `

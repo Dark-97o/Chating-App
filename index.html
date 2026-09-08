@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Two of Us | Mausikta & Subhranil's Secret Space</title>
-  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing, anime profile avatars, anniversary counter, and birthday countdowns.">
+  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing, anime profile avatars, anniversary counter, and WebRTC live video & audio calls.">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +32,8 @@
       </div>
 
       <div class="header-actions">
+        <button class="icon-btn" id="videoCallBtn" title="Start Live Video Call">📹</button>
+        <button class="icon-btn" id="audioCallBtn" title="Start Voice Call">📞</button>
         <button class="icon-btn" id="milestonesBtn" title="Special Dates & Birthdays">🎂</button>
         <button class="icon-btn" id="joinModalTriggerBtn" title="Switch User">👤</button>
         <button class="icon-btn" id="themeModalBtn" title="Switch Theme">🎨</button>
@@ -111,6 +113,46 @@
       </button>
     </footer>
 
+  </div>
+
+  <!-- Live WebRTC Call Fullscreen Overlay -->
+  <div class="modal-overlay" id="callModal">
+    <div class="call-container">
+      <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+      <video id="localVideo" class="local-video-pip" autoplay playsinline muted></video>
+      
+      <!-- Call Active Header Info -->
+      <div class="call-header-info">
+        <img id="callPartnerAvatar" class="call-avatar-thumb" src="assets/subhranil.jpg" alt="Partner Avatar">
+        <div>
+          <h4 id="callPartnerName">Subhranil</h4>
+          <span id="callDurationLabel" class="call-status-badge">Connected 00:00</span>
+        </div>
+      </div>
+
+      <!-- In-Call Control Toolbar -->
+      <div class="call-controls-bar">
+        <button class="call-control-btn" id="toggleMicBtn" title="Toggle Microphone">🎤</button>
+        <button class="call-control-btn" id="toggleCamBtn" title="Toggle Camera">📹</button>
+        <button class="call-control-btn end-call" id="endCallBtn" title="End Call">📵</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming Call Alert Modal -->
+  <div class="modal-overlay" id="incomingCallModal">
+    <div class="modal-card call-alert-card">
+      <div class="calling-pulse-avatar">
+        <img id="incomingCallerAvatar" src="assets/subhranil.jpg" alt="Caller Avatar">
+      </div>
+      <h3 id="incomingCallerName" class="couple-title-font" style="margin-top: 12px;">Subhranil</h3>
+      <p id="incomingCallTypeText">Incoming Video Call...</p>
+      
+      <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+        <button class="call-action-btn accept-btn" id="acceptCallBtn">🟢 Accept</button>
+        <button class="call-action-btn decline-btn" id="declineCallBtn">🔴 Decline</button>
+      </div>
+    </div>
   </div>
 
   <!-- Special Dates & Anniversary Milestones Modal -->

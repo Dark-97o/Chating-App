@@ -190,22 +190,22 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .icon-btn {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--glass-border);
   color: var(--text-main);
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .icon-btn:hover {
@@ -247,21 +247,191 @@ body {
   border: 1px solid var(--accent-gold);
 }
 
-.room-badge {
-  background: rgba(255, 255, 255, 0.08);
+/* WebRTC Live Call Screen */
+.call-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000000;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+}
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #0d0414;
+}
+
+.local-video-pip {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 110px;
+  height: 160px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 2px solid var(--accent-rose);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  background: #150921;
+}
+
+.call-header-info {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 6, 24, 0.7);
+  backdrop-filter: blur(12px);
+  padding: 8px 16px 8px 10px;
+  border-radius: 30px;
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 3px 10px;
-  font-size: 0.72rem;
-  color: var(--text-main);
+  z-index: 10;
+}
+
+.call-avatar-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-gold);
+}
+
+.call-header-info h4 {
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.call-status-badge {
+  font-size: 0.75rem;
+  color: var(--accent-gold);
+}
+
+.call-controls-bar {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(15, 6, 24, 0.85);
+  backdrop-filter: blur(15px);
+  padding: 12px 28px;
+  border-radius: 40px;
+  border: 1px solid var(--glass-border);
+  z-index: 10;
+}
+
+.call-control-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.3rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
-.room-badge:hover {
-  border-color: var(--accent-rose);
+.call-control-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.call-control-btn.off {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  color: #f87171;
+}
+
+.call-control-btn.end-call {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+}
+
+.call-control-btn.end-call:hover {
+  transform: scale(1.15);
+  background: #dc2626;
+}
+
+/* Incoming Call Alert Modal */
+.call-alert-card {
+  padding: 32px 24px;
+}
+
+.calling-pulse-avatar {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto;
+}
+
+.calling-pulse-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-rose);
+  box-shadow: 0 0 20px var(--accent-rose-glow);
+  position: relative;
+  z-index: 2;
+}
+
+.calling-pulse-avatar::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border-radius: 50%;
+  background: var(--accent-rose-glow);
+  animation: callPulse 1.5s infinite ease-out;
+  z-index: 1;
+}
+
+@keyframes callPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.call-action-btn {
+  padding: 12px 24px;
+  border-radius: 30px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.call-action-btn:hover {
+  transform: scale(1.08);
+}
+
+.call-action-btn.accept-btn {
+  background: #10b981;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+}
+
+.call-action-btn.decline-btn {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
 }
 
 /* Milestones Cards Modal */
@@ -326,7 +496,6 @@ body {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--accent-rose);
-
 }
 
 .milestone-sub {
