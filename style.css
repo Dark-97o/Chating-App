@@ -314,6 +314,31 @@ body {
   color: var(--accent-gold);
 }
 
+.close-call-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(15, 6, 24, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  color: #ffffff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.close-call-btn:hover {
+  background: var(--accent-rose);
+  transform: scale(1.08);
+}
+
 .call-controls-bar {
   position: absolute;
   bottom: 30px;

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const callPartnerAvatar = document.getElementById('callPartnerAvatar');
   const callPartnerName = document.getElementById('callPartnerName');
   const callDurationLabel = document.getElementById('callDurationLabel');
-  const endCallBtn = document.getElementById('endCallBtn');
+  const closeCallModalBtn = document.getElementById('closeCallModalBtn');
 
   // Incoming Call Elements
   const incomingCallModal = document.getElementById('incomingCallModal');
@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const roomName = `our-secret-space-mausikta-subhranil`;
+    const roomName = `secret-space-mau-sub`;
     const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
     const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
     const audioOnlyFlag = isVideo ? '' : '&webcam=0';
@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
     stopRingtone();
     incomingCallModal.classList.remove('active');
 
-    const roomName = `our-secret-space-mausikta-subhranil`;
+    const roomName = `secret-space-mau-sub`;
     const myPush = currentPasscode === 'MAU' ? 'MAU' : 'SUB';
     const partnerView = currentPasscode === 'MAU' ? 'SUB' : 'MAU';
     const isVideo = pendingOffer ? pendingOffer.isVideo : true;
@@ -648,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
   audioCallBtn.addEventListener('click', () => startCall(false));
   acceptCallBtn.addEventListener('click', acceptCall);
   declineCallBtn.addEventListener('click', declineCall);
-  endCallBtn.addEventListener('click', endCall);
+  if (closeCallModalBtn) closeCallModalBtn.addEventListener('click', endCall);
 
   const renderMessages = (messages) => {
     chatMessages.innerHTML = `
