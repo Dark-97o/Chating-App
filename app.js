@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentRoomCodeLabel = document.getElementById('currentRoomCodeLabel');
   const myAvatarThumb = document.getElementById('myAvatarThumb');
   const myNameLabel = document.getElementById('myNameLabel');
+  const togetherDaysText = document.getElementById('togetherDaysText');
 
   // Modals & Settings
   const themeModalBtn = document.getElementById('themeModalBtn');
@@ -69,6 +70,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const subPreview = document.getElementById('subPreview');
   const pinDots = document.querySelectorAll('.pin-dot');
   const keypad = document.getElementById('keypad');
+
+  // Milestones Modal Elements
+  const milestonesBtn = document.getElementById('milestonesBtn');
+  const togetherCounterBtn = document.getElementById('togetherCounterBtn');
+  const milestonesModal = document.getElementById('milestonesModal');
+  const closeMilestonesBtn = document.getElementById('closeMilestonesBtn');
+  const modalDaysTogether = document.getElementById('modalDaysTogether');
+  const modalYearsMonths = document.getElementById('modalYearsMonths');
+  const subBirthdayCountdown = document.getElementById('subBirthdayCountdown');
+  const mauBirthdayCountdown = document.getElementById('mauBirthdayCountdown');
 
   // Profiles Database (Mausikta & Subhranil)
   const profiles = {
@@ -96,6 +107,68 @@ document.addEventListener('DOMContentLoaded', () => {
   let pinCode = '';
   const correctPin = '1234';
   let isInitialLoadComplete = false;
+
+  // Calculate Days Together & Birthday Countdowns
+  const updateMilestones = () => {
+    const now = new Date();
+    
+    // Anniversary: September 25, 2023
+    const startDate = new Date(2023, 8, 25); // Month 8 is September (0-indexed)
+    const diffTime = Math.abs(now - startDate);
+    const totalDaysTogether = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // Calculate Years, Months, Days breakdown
+    let years = now.getFullYear() - startDate.getFullYear();
+    let months = now.getMonth() - startDate.getMonth();
+    let days = now.getDate() - startDate.getDate();
+
+    if (days < 0) {
+      months--;
+      const prevMonthLastDay = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+      days += prevMonthLastDay;
+    }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    const breakdownText = `${years} Year${years !== 1 ? 's' : ''}, ${months} Month${months !== 1 ? 's' : ''}, ${days} Day${days !== 1 ? 's' : ''}`;
+    
+    togetherDaysText.textContent = `💖 Day ${totalDaysTogether.toLocaleString()} Together`;
+    modalDaysTogether.textContent = `${totalDaysTogether.toLocaleString()} Days`;
+    modalYearsMonths.textContent = breakdownText;
+
+    // Subhranil Birthday: May 24, 2004
+    const subBdayText = calculateBirthdayCountdown(new Date(2004, 4, 24), 'Subhranil');
+    subBirthdayCountdown.textContent = subBdayText;
+
+    // Mausikta Birthday: November 8, 2005
+    const mauBdayText = calculateBirthdayCountdown(new Date(2005, 10, 8), 'Mausikta');
+    mauBirthdayCountdown.textContent = mauBdayText;
+  };
+
+  const calculateBirthdayCountdown = (birthDate, name) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    let age = currentYear - birthDate.getFullYear();
+
+    let nextBday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+    if (now > nextBday && (now.getMonth() !== birthDate.getMonth() || now.getDate() !== birthDate.getDate())) {
+      nextBday.setFullYear(currentYear + 1);
+    } else if (now < nextBday) {
+      age--;
+    }
+
+    const diffDays = Math.ceil((nextBday - now) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0 || (now.getMonth() === birthDate.getMonth() && now.getDate() === birthDate.getDate())) {
+      return `🎉 TODAY IS ${name.toUpperCase()}'S ${age + 1}th BIRTHDAY! 🎂💖`;
+    }
+
+    return `${age + 1}th Birthday in ${diffDays} Day${diffDays !== 1 ? 's' : ''} (${nextBday.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
+  };
+
+  updateMilestones();
 
   // Audio Synthesizer
   const playSound = (type) => {
@@ -142,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // On-Demand Particle Engine
+  // Canvas Particle Animation Engine
   const canvas = document.getElementById('heartCanvas');
   const ctx = canvas.getContext('2d');
   let particles = [];
@@ -255,7 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const myProfile = profiles[currentPasscode];
     const partnerProfile = profiles[myProfile.partnerCode];
 
-    // Update Header & Banner UI
     currentRoomCodeLabel.textContent = currentRoomId;
     myNameLabel.textContent = myProfile.name;
     myAvatarThumb.src = myProfile.avatar;
@@ -413,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Button Animation Event Listeners
+  // Animation Buttons
   kissAnimBtn.addEventListener('click', () => sendAnimationEvent('kiss'));
   hugAnimBtn.addEventListener('click', () => sendAnimationEvent('hug'));
   roseAnimBtn.addEventListener('click', () => sendAnimationEvent('rose'));
@@ -500,6 +572,11 @@ document.addEventListener('DOMContentLoaded', () => {
       messageInput.focus();
     });
   });
+
+  // Milestones Modal Event Listeners
+  milestonesBtn.addEventListener('click', () => milestonesModal.classList.add('active'));
+  togetherCounterBtn.addEventListener('click', () => milestonesModal.classList.add('active'));
+  closeMilestonesBtn.addEventListener('click', () => milestonesModal.classList.remove('active'));
 
   // Join Space / Code Handling
   mauPreview.addEventListener('click', () => {

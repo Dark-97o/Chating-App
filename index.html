@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Two of Us | Mausikta & Subhranil's Secret Space</title>
-  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing, anime profile avatars, and romantic vibes.">
+  <meta name="description" content="A private, aesthetic 2-person chatting experience with real-time Firebase syncing, anime profile avatars, anniversary counter, and birthday countdowns.">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +32,7 @@
       </div>
 
       <div class="header-actions">
+        <button class="icon-btn" id="milestonesBtn" title="Special Dates & Birthdays">🎂</button>
         <button class="icon-btn" id="joinModalTriggerBtn" title="Switch User / Room">👤</button>
         <button class="icon-btn" id="themeModalBtn" title="Switch Theme">🎨</button>
         <button class="icon-btn" id="lockAppBtn" title="Lock Space">🔒</button>
@@ -39,10 +40,10 @@
     </header>
 
     <!-- Togetherness Banner -->
-    <div class="togetherness-bar">
-      <div class="days-counter">
+    <div class="togetherness-bar" id="togethernessBar">
+      <div class="days-counter" id="togetherCounterBtn" style="cursor: pointer;" title="View Anniversary Details">
         <img id="myAvatarThumb" class="thumb-avatar" src="assets/mausikta.jpg" alt="My Avatar">
-        <span id="myNameLabel">Mausikta</span>
+        <span id="togetherDaysText">💖 Day 1079 Together</span>
       </div>
       <button class="room-badge" id="roomBadgeBtn">
         <span>🔑 Room:</span> <strong id="currentRoomCodeLabel">our-secret-space</strong>
@@ -113,6 +114,51 @@
       </button>
     </footer>
 
+  </div>
+
+  <!-- Special Dates & Anniversary Milestones Modal -->
+  <div class="modal-overlay" id="milestonesModal">
+    <div class="modal-card">
+      <h3 class="couple-title-font" style="font-size: 1.5rem;">Our Special Dates</h3>
+      <p>Anniversary & Birthdays</p>
+
+      <div class="milestones-list">
+        
+        <!-- Days Together Card -->
+        <div class="milestone-card highlight-card">
+          <div class="milestone-icon">💖</div>
+          <div class="milestone-details">
+            <span class="milestone-title">Together Since</span>
+            <span class="milestone-date">September 25, 2023</span>
+            <div class="milestone-counter-big" id="modalDaysTogether">1,079 Days</div>
+            <span class="milestone-sub" id="modalYearsMonths">2 Years, 11 Months, 14 Days</span>
+          </div>
+        </div>
+
+        <!-- Subhranil Birthday Card -->
+        <div class="milestone-card">
+          <img src="assets/subhranil.jpg" class="milestone-avatar" alt="Subhranil">
+          <div class="milestone-details">
+            <span class="milestone-title">Subhranil's Birthday 🎂</span>
+            <span class="milestone-date">May 24, 2004</span>
+            <span class="milestone-sub" id="subBirthdayCountdown">May 24 • Countdown</span>
+          </div>
+        </div>
+
+        <!-- Mausikta Birthday Card -->
+        <div class="milestone-card">
+          <img src="assets/mausikta.jpg" class="milestone-avatar" alt="Mausikta">
+          <div class="milestone-details">
+            <span class="milestone-title">Mausikta's Birthday 🎂</span>
+            <span class="milestone-date">November 8, 2005</span>
+            <span class="milestone-sub" id="mauBirthdayCountdown">Nov 8 • Countdown</span>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="action-btn-primary" style="margin-top: 18px;" id="closeMilestonesBtn">Close</button>
+    </div>
   </div>
 
   <!-- Join Secret Space Modal / Overlay -->
