@@ -908,8 +908,17 @@ document.addEventListener('DOMContentLoaded', () => {
     selectProfile(passcodeInput.value.trim().toUpperCase());
   });
 
-  if (joinModalTriggerBtn) {
-    joinModalTriggerBtn.addEventListener('click', () => {
+  const switchUserBtn = document.getElementById('switchUserBtn');
+  if (switchUserBtn) {
+    switchUserBtn.addEventListener('click', () => {
+      passcodeInput.value = currentPasscode;
+      joinModal.classList.add('active');
+    });
+  }
+
+  if (myAvatarThumb) {
+    myAvatarThumb.addEventListener('click', (e) => {
+      e.stopPropagation();
       passcodeInput.value = currentPasscode;
       joinModal.classList.add('active');
     });
