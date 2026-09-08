@@ -67,7 +67,7 @@
 }
 
 body {
-  background: var(--wallpaper-overlay), url('assets/wallpaper.jpg') center/cover no-repeat fixed;
+  background: #000000;
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
