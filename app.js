@@ -939,10 +939,12 @@ document.addEventListener('DOMContentLoaded', () => {
     selectProfile(passcodeInput.value.trim().toUpperCase());
   });
 
-  joinModalTriggerBtn.addEventListener('click', () => {
-    passcodeInput.value = currentPasscode;
-    joinModal.classList.add('active');
-  });
+  if (joinModalTriggerBtn) {
+    joinModalTriggerBtn.addEventListener('click', () => {
+      passcodeInput.value = currentPasscode;
+      joinModal.classList.add('active');
+    });
+  }
 
   // Window unload cleanup (mark presence offline, terminate ongoing call)
   window.addEventListener('beforeunload', () => {
@@ -965,8 +967,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Theme Switching
-  themeModalBtn.addEventListener('click', () => themeModal.classList.add('active'));
-  closeThemeBtn.addEventListener('click', () => themeModal.classList.remove('active'));
+  if (themeModalBtn) {
+    themeModalBtn.addEventListener('click', () => themeModal.classList.add('active'));
+  }
+  if (closeThemeBtn) {
+    closeThemeBtn.addEventListener('click', () => themeModal.classList.remove('active'));
+  }
 
   document.querySelectorAll('[data-set-theme]').forEach(btn => {
     btn.addEventListener('click', () => {
