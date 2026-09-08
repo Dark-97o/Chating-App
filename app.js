@@ -132,11 +132,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let ringtoneInterval = null;
 
   const rtcConfig = {
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun.services.mozilla.com' }
+    ]
   };
 
   // Helper to safely get Realtime Database references
-  const getSignalRef = () => ref(db, `rooms/${currentRoomId}/callSignal`);
+  const getOfferRef = () => ref(db, `rooms/${currentRoomId}/callSignal/offer`);
+  const getAnswerRef = () => ref(db, `rooms/${currentRoomId}/callSignal/answer`);
+  const getCandidatesRef = (code) => ref(db, `rooms/${currentRoomId}/callSignal/candidates/${code}`);
+  const getEndSignalRef = () => ref(db, `rooms/${currentRoomId}/callSignal/end`);
   const getMessagesRef = () => ref(db, `rooms/${currentRoomId}/messages`);
   const getAnimRef = () => ref(db, `rooms/${currentRoomId}/anim`);
 
@@ -478,30 +486,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     activeListeners.push(animsRef);
 
-    // WebRTC Realtime Firebase Signaling Listener
-    const signalRef = getSignalRef();
-    onValue(signalRef, async (snapshot) => {
+    // WebRTC Realtime Firebase Signaling Listeners
+    const offerRef = getOfferRef();
+    onValue(offerRef, (snapshot) => {
       const signal = snapshot.val();
       if (!signal || signal.callerCode === currentPasscode) return;
 
-      if (signal.type === 'OFFER' && (Date.now() - signal.timestamp < 30000)) {
+      if (Date.now() - signal.timestamp < 30000) {
         pendingOffer = signal;
         incomingCallTypeText.textContent = signal.isVideo ? 'Incoming Video Call...' : 'Incoming Voice Call...';
         incomingCallModal.classList.add('active');
         startRingtone();
-      } else if (signal.type === 'ANSWER' && peerConnection && isCallActive) {
-        if (peerConnection.signalingState !== 'stable') {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.answer));
-        }
-      } else if (signal.type === 'ICE_CANDIDATE' && peerConnection && signal.candidate) {
-        try {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
-        } catch (e) {}
-      } else if (signal.type === 'END') {
+      }
+    });
+    activeListeners.push(offerRef);
+
+    const endRef = getEndSignalRef();
+    onValue(endRef, (snapshot) => {
+      const endSignal = snapshot.val();
+      if (endSignal && endSignal.callerCode !== currentPasscode && isCallActive) {
         cleanUpCall();
       }
     });
-    activeListeners.push(signalRef);
+    activeListeners.push(endRef);
   };
 
   // WebRTC Call Core Logic
@@ -513,8 +520,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+      // Clear previous call signals
+      set(ref(db, `rooms/${currentRoomId}/callSignal`), null);
+
       localStream = await navigator.mediaDevices.getUserMedia({
-        video: isVideo,
+        video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
         audio: true
       });
 
@@ -526,31 +536,54 @@ document.addEventListener('DOMContentLoaded', () => {
       localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
       peerConnection.ontrack = (event) => {
-        remoteStream = event.streams[0];
-        remoteVideo.srcObject = remoteStream;
+        if (event.streams && event.streams[0]) {
+          remoteVideo.srcObject = event.streams[0];
+          remoteVideo.play().catch(() => {});
+        }
       };
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          set(getSignalRef(), {
-            type: 'ICE_CANDIDATE',
-            callerCode: currentPasscode,
-            candidate: event.candidate.toJSON(),
-            timestamp: Date.now()
-          });
+          push(getCandidatesRef(currentPasscode), event.candidate.toJSON());
         }
       };
 
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
 
-      set(getSignalRef(), {
-        type: 'OFFER',
+      set(getOfferRef(), {
         callerCode: currentPasscode,
         isVideo: isVideo,
         offer: { type: offer.type, sdp: offer.sdp },
         timestamp: Date.now()
       });
+
+      // Listen for Answer
+      const answerRef = getAnswerRef();
+      onValue(answerRef, async (snapshot) => {
+        const answerData = snapshot.val();
+        if (answerData && answerData.callerCode !== currentPasscode && peerConnection) {
+          if (peerConnection.signalingState !== 'stable') {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answerData.answer));
+          }
+        }
+      });
+      activeListeners.push(answerRef);
+
+      // Listen for Partner Candidates
+      const partnerCode = profiles[currentPasscode].partnerCode;
+      const partnerCandidatesRef = getCandidatesRef(partnerCode);
+      onValue(partnerCandidatesRef, async (snapshot) => {
+        const candidates = snapshot.val();
+        if (candidates && peerConnection && peerConnection.remoteDescription) {
+          for (const key in candidates) {
+            try {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(candidates[key]));
+            } catch (e) {}
+          }
+        }
+      });
+      activeListeners.push(partnerCandidatesRef);
 
       isCallActive = true;
       callModal.classList.add('active');
@@ -571,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       localStream = await navigator.mediaDevices.getUserMedia({
-        video: pendingOffer.isVideo,
+        video: pendingOffer.isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
         audio: true
       });
 
@@ -583,18 +616,15 @@ document.addEventListener('DOMContentLoaded', () => {
       localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
       peerConnection.ontrack = (event) => {
-        remoteStream = event.streams[0];
-        remoteVideo.srcObject = remoteStream;
+        if (event.streams && event.streams[0]) {
+          remoteVideo.srcObject = event.streams[0];
+          remoteVideo.play().catch(() => {});
+        }
       };
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          set(getSignalRef(), {
-            type: 'ICE_CANDIDATE',
-            callerCode: currentPasscode,
-            candidate: event.candidate.toJSON(),
-            timestamp: Date.now()
-          });
+          push(getCandidatesRef(currentPasscode), event.candidate.toJSON());
         }
       };
 
@@ -602,12 +632,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
 
-      set(getSignalRef(), {
-        type: 'ANSWER',
+      set(getAnswerRef(), {
         callerCode: currentPasscode,
         answer: { type: answer.type, sdp: answer.sdp },
         timestamp: Date.now()
       });
+
+      // Listen for Partner Candidates
+      const callerCandidatesRef = getCandidatesRef(pendingOffer.callerCode);
+      onValue(callerCandidatesRef, async (snapshot) => {
+        const candidates = snapshot.val();
+        if (candidates && peerConnection && peerConnection.remoteDescription) {
+          for (const key in candidates) {
+            try {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(candidates[key]));
+            } catch (e) {}
+          }
+        }
+      });
+      activeListeners.push(callerCandidatesRef);
 
       isCallActive = true;
       callModal.classList.add('active');
@@ -622,8 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
     stopRingtone();
     incomingCallModal.classList.remove('active');
     if (currentPasscode) {
-      set(getSignalRef(), {
-        type: 'END',
+      set(getEndSignalRef(), {
         callerCode: currentPasscode,
         timestamp: Date.now()
       });
@@ -654,8 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const endCall = () => {
     if (currentPasscode) {
-      set(getSignalRef(), {
-        type: 'END',
+      set(getEndSignalRef(), {
         callerCode: currentPasscode,
         timestamp: Date.now()
       });
@@ -687,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         toggleMicBtn.classList.toggle('off', !audioTrack.enabled);
-        toggleMicBtn.textContent = audioTrack.enabled ? '🎤' : '🎙️';
+        toggleMicBtn.innerHTML = audioTrack.enabled ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
       }
     }
   });
@@ -698,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         toggleCamBtn.classList.toggle('off', !videoTrack.enabled);
-        toggleCamBtn.textContent = videoTrack.enabled ? '📹' : '🚫';
+        toggleCamBtn.innerHTML = videoTrack.enabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
         localVideo.style.display = videoTrack.enabled ? 'block' : 'none';
       }
     }
@@ -958,8 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
     if (isCallActive && currentPasscode) {
-      set(getSignalRef(), {
-        type: 'END',
+      set(getEndSignalRef(), {
         callerCode: currentPasscode,
         timestamp: Date.now()
       });
