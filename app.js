@@ -704,11 +704,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const scrollToBottom = (smooth = false) => {
-    if (smooth) {
-      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-    } else {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+    if (!chatMessages) return;
+    const executeScroll = () => {
+      if (smooth) {
+        chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+      } else {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    };
+    executeScroll();
+    requestAnimationFrame(executeScroll);
+    setTimeout(executeScroll, 60);
   };
 
   // Scroll to Bottom Button Visibility & Click Handler

@@ -126,6 +126,7 @@ body {
   align-items: center;
   justify-content: space-between;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .partner-info {
@@ -226,6 +227,7 @@ body {
   align-items: center;
   justify-content: space-between;
   color: var(--accent-gold);
+  flex-shrink: 0;
 }
 
 .days-counter {
@@ -531,9 +533,13 @@ body {
 
 /* Messages Area with Wallpaper Background */
 .chat-messages {
-  flex: 1;
+  flex: 1 1 0px;
+  min-height: 0;
   padding: 20px 16px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -739,6 +745,7 @@ body {
   background: rgba(18, 9, 24, 0.8);
   border-top: 1px solid var(--glass-border);
   backdrop-filter: blur(12px);
+  flex-shrink: 0;
 }
 
 .anim-btn {
@@ -830,6 +837,7 @@ body {
   padding: 6px 16px;
   background: rgba(0, 0, 0, 0.3);
   border-top: 1px solid var(--glass-border);
+  flex-shrink: 0;
 }
 
 .sticker-btn {
@@ -852,6 +860,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .input-box-wrapper {
